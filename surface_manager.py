@@ -1,10 +1,10 @@
 import math
-
 import pygame
 from constants import*
 from pygame import Surface as pgs
 from typing import Tuple
 from cell import Cell
+from maze import Maze
 
 
 class SurfaceManager:
@@ -23,13 +23,33 @@ class SurfaceManager:
         if surface_ is not None:
             surface_.fill(TRANSPARENT)
 
-    def render(self):
+    def render_maze(self, maze: Maze):
+        rects_to_update = []
+
+        def get_rect(c: Cell, rects: list[pygame.Rect]):
+            if not c.is_up_to_date:
+                rects.append(pygame.Rect(c.col * c.width, c.row * c.width, c.width, c.width))
+
+        maze.process_cells(lambda c: get_rect(c, rects_to_update))
+
+        self.render(rects_to_update)
+        for cell in maze.get_cells():
+            cell.mark_updated()
+
+    def render(self, rect_list: list[pygame.Rect] = None):
         main_surface: pgs = self.surfaces.get(SURFACE_MAIN)
         main_surface.fill(BLACK)
-        dest = (0.0, 0.0)
-        for surface in self.surfaces.values():
-            main_surface.blit(surface, dest)
-        pygame.display.flip()
+
+        if rect_list is not None:
+            for rect in rect_list:
+                for surface in self.surfaces.values():
+                    main_surface.blit(surface, rect, area=rect)
+            pygame.display.update(rect_list)
+        else:
+            dest = (0, 0)
+            for surface in self.surfaces.values():
+                main_surface.blit(surface, dest)
+            pygame.display.flip()
 
     def update_path_surface(self, path: list[Cell], path_color) -> bool:
         path_surface = self.surfaces[SURFACE_PATH]
@@ -41,11 +61,10 @@ class SurfaceManager:
             points.append((cell.col * width + width / 2, cell.row * width + width / 2))
         pygame.draw.lines(path_surface, path_color, closed=False, points=points, width=WALL_WIDTH)
 
-    def update_maze_surface(self, maze: list[list[Cell]]) -> None:
+    def update_maze_surface(self, maze: Maze) -> None:
         maze_surface: pygame.Surface = self.surfaces[SURFACE_MAZE]
-        for row in maze:
-            for cell in row:
-                cell.draw(maze_surface)
+        for cell in maze.get_cells():
+            cell.draw(maze_surface)
 
     def toggle_grid_surface(self):
         grid_surface: pygame.Surface = self.surfaces[SURFACE_GRID]

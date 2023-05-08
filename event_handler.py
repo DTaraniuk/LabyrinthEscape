@@ -1,15 +1,16 @@
 from pathfinding import*
 from typing import Callable
 from surface_manager import SurfaceManager
+from maze import Maze
 import pygame
 
 
 def wait_for_input():
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
                 pygame.quit()
-            elif event.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            elif e.type in (pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
                 return
 
 
@@ -22,7 +23,7 @@ def user_message(surface_manager: SurfaceManager, text: str, font_size: int, poi
     surface_manager.render()
 
 
-def read_endpoints(grid: List[List[Cell]]) -> Tuple[Cell, Cell]:
+def read_endpoints(maze: Maze) -> Tuple[Cell, Cell]:
     click_num = 0
     width = WIDTH/ROWS
     start: Cell = None
@@ -33,9 +34,9 @@ def read_endpoints(grid: List[List[Cell]]) -> Tuple[Cell, Cell]:
             continue
         y, x = tuple(int(value // width) for value in click.pos)
         if click_num == 0:
-            start = grid[x][y]
+            start = maze.get_cell(x, y)
         else:
-            end = grid[x][y]
+            end = maze.get_cell(x, y)
         click_num += 1
     return start, end
 
@@ -45,6 +46,7 @@ def handle_pathfinding_call(surface_manager: SurfaceManager, maze, algo: Callabl
     pathfinding_res = algo(start, end)
     for cell in pathfinding_res.affected_nodes:
         cell.color = cell_color
+        cell.request_update()
     surface_manager.update_path_surface(pathfinding_res.path, path_color)
     surface_manager.update_maze_surface(maze)
 

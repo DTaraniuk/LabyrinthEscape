@@ -10,16 +10,24 @@ class Cell:
         self.width = width
         self.neighbors: List['Cell'] = []
         self.total_rows = total_rows
-        self.visited = False
         self.color: Tuple[int, int, int] = WHITE
+        self.is_up_to_date = False
 
     def __lt__(self, other):
         return self.row+self.col < other.row + other.col
+
+    def request_update(self):
+        self.is_up_to_date = False
+
+    def mark_updated(self):
+        self.is_up_to_date = True
 
     def get_pos(self) -> Tuple[int, int]:
         return self.row, self.col
 
     def draw(self, win: pygame.Surface) -> None:
+        if self.is_up_to_date:
+            return
         width: int = self.width
         x, y = self.col * width, self.row * width
         pygame.draw.rect(win, self.color, (x, y, width, width))
@@ -52,3 +60,8 @@ class Cell:
             if 'L' == i:  # LEFT
                 wy2 += width
             pygame.draw.line(win, BLACK, (wx1, wy1), (wx2, wy2), WALL_WIDTH*2)
+
+    def get_center(self) -> tuple[int, int]:
+        x = self.col+self.width/2
+        y = self.row+self.width/2
+        return (x, y)

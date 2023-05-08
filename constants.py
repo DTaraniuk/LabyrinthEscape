@@ -17,6 +17,8 @@ WIDTH = 800
 WALL_WIDTH = 3
 GRID_WIDTH = 1
 GRID = False
+IMG_FOLDER = 'img'
+PLAYER_IMG = 'rat.jpg'
 # endregion
 
 # region surfaces
@@ -25,5 +27,6 @@ SURFACE_MAZE = "maze"
 SURFACE_GRID = "grid"
 SURFACE_PATH = "path"
 SURFACE_TEXT = "text"
+SURFACE_PLAY = "play"
 # endregion
 
