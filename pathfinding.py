@@ -15,7 +15,7 @@ class PathfindingRes:
 
 def heuristic(node: Cell, goal: Cell) -> int:
     # Calculate the Manhattan distance between two nodes
-    return abs(node.col - goal.col) + abs(node.row - goal.row)
+    return abs(node.index_in_col - goal.index_in_col) + abs(node.index_in_row - goal.index_in_row)
 
 
 def astar(start: Cell, goal: Cell) -> PathfindingRes:
@@ -54,7 +54,7 @@ def astar(start: Cell, goal: Cell) -> PathfindingRes:
         closed_set.add(current)
 
         # Explore the neighboring nodes
-        for neighbor in current.neighbors:
+        for neighbor in current._neighbors:
             # Calculate the g-score for the neighbor
             g_score = g_scores[current] + 1
 
@@ -87,7 +87,7 @@ def dfs_path(start: Cell, goal: Cell) -> PathfindingRes:
                 res.path = path
                 return res  # Return the path if the goal is reached
 
-            for neighbor in node.neighbors:
+            for neighbor in node._neighbors:
                 if neighbor not in res.affected_nodes:
                     stack.append((neighbor, path + [neighbor]))
 
@@ -105,7 +105,7 @@ def bfs_path(start: Cell, goal: Cell) -> PathfindingRes:
             if node == goal:
                 res.path = path
                 return res
-            for neighbor in node.neighbors:
+            for neighbor in node._neighbors:
                 if neighbor in res.affected_nodes:
                     continue
                 neighbor_path = path + [neighbor]

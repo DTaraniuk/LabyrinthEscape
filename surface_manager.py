@@ -5,6 +5,7 @@ from pygame import Surface as pgs
 from typing import Tuple
 from cell import Cell
 from maze import Maze
+from player import Player
 
 
 class SurfaceManager:
@@ -28,7 +29,7 @@ class SurfaceManager:
 
         def get_rect(c: Cell, rects: list[pygame.Rect]):
             if not c.is_up_to_date:
-                rects.append(pygame.Rect(c.col * c.width, c.row * c.width, c.width, c.width))
+                rects.append(pygame.Rect(c.index_in_col * c.width, c.index_in_row * c.width, c.width, c.width))
 
         maze.process_cells(lambda c: get_rect(c, rects_to_update))
 
@@ -58,7 +59,8 @@ class SurfaceManager:
         width = WIDTH / ROWS
         points: list[Tuple[int, int]] = []
         for cell in path:
-            points.append((cell.col * width + width / 2, cell.row * width + width / 2))
+            cell.request_update()
+            points.append((cell.index_in_row * width + width / 2, cell.index_in_col * width + width / 2))
         pygame.draw.lines(path_surface, path_color, closed=False, points=points, width=WALL_WIDTH)
 
     def update_maze_surface(self, maze: Maze) -> None:
@@ -83,6 +85,11 @@ class SurfaceManager:
         text_surface = create_text_frame(text, font_, text_color=PINK, frame_color=BLACK, padding=int(font_.get_height()/2), aspect_ratio=(3, 2))
         self.surfaces[SURFACE_TEXT] = text_surface
 
+    def update_play_surface(self, player: Player):
+        play_surface = self.surfaces[SURFACE_PLAY]
+        play_surface.fill(TRANSPARENT)
+        play_surface.blit(player.image, (player.x, player.y))
+
     def show_text(self):
         text_surface: pgs = self.surfaces[SURFACE_TEXT]
         main_surface: pgs = self.surfaces.get(SURFACE_MAIN)
@@ -95,7 +102,6 @@ class SurfaceManager:
         main_surface.blit(shade_surface, (0, 0))
         main_surface.blit(text_surface, (x_coord, y_coord))
         pygame.display.flip()
-        # pygame.display.update((x_coord, y_coord), (width, height))
 
 
 def wrap_text(text: str, font: pygame.font.Font, max_width: int) -> list[str]:

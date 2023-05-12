@@ -6,11 +6,18 @@ from pathfinding import*
 from constants import*
 import event_handler
 from player import Player
+from coordpair import CoordPair
 
 
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
 pygame.display.set_caption("Labyrinth Escape")
+
+
+def refresh(surface_manager, maze):
+    maze.request_full_update()
+    surface_manager.update_maze_surface(maze)
+    surface_manager.clear_surface("path")
 
 
 def init_surfaces(win: pgs) -> SurfaceManager:
@@ -29,21 +36,25 @@ def main(win: pgs) -> None:
     maze = Maze(ROWS, WIDTH)
     maze.generate_labyrinth()
     surface_manager.update_maze_surface(maze)
-    surface_manager.render()
 
-    coord = ROWS // 2 + 0.5 * maze.cell_width
-    player = Player(coord, coord, (maze.cell_width/2, maze.cell_width/2))
+    center = (ROWS // 2 + 0.5) * maze.cell_width
+    player_img = pygame.image.load(f"{IMG_FOLDER}\\{PLAYER_IMG}")
+    player = Player(center, center, (maze.cell_width/2, maze.cell_width/2), player_img)
+    surface_manager.update_play_surface(player)
 
-    event_handler.user_message(surface_manager, "Тут могла быть Ваша реклама", 30, (0.0, 0.0))
+    clock = pygame.time.Clock()
+    escapes: int = 0
 
     run = True
+    surface_manager.render()
+    event_handler.user_message(surface_manager, "Privet. Click to close", FONT_SIZE)
     while run:
-
         for event_ in pygame.event.get():
             if event_.type == pygame.QUIT:
                 run = False
+                break
 
-            elif event_.type == pygame.KEYDOWN:
+            if event_.type == pygame.KEYDOWN:
                 if event_.key == pygame.K_a:
                     event_handler.handle_pathfinding_call(surface_manager, maze, pathfinding.astar, RED, ORANGE)
                 elif event_.key == pygame.K_d:
@@ -51,10 +62,8 @@ def main(win: pgs) -> None:
                 elif event_.key == pygame.K_b:
                     event_handler.handle_pathfinding_call(surface_manager, maze, pathfinding.bfs_path, GREEN, PINK)
                 elif event_.key == pygame.K_SPACE:
-                    maze.process_cells(lambda cell: setattr(cell, 'color', WHITE))
-                    maze.request_full_update()
-                    surface_manager.update_maze_surface(maze)
-                    surface_manager.clear_surface("path")
+                    # maze.process_cells(lambda cell: setattr(cell, 'color', WHITE))
+                    refresh(surface_manager, maze)
                 elif event_.key == pygame.K_r:
                     maze = Maze(ROWS, WIDTH)
                     maze.generate_labyrinth()
@@ -62,16 +71,29 @@ def main(win: pgs) -> None:
                 elif event_.key == pygame.K_g:
                     surface_manager.toggle_grid_surface()
                     maze.request_full_update()
-                elif event_.key == pygame.K_UP:
-                    player.move(0, -1)
-                elif event_.key == pygame.K_DOWN:
-                    player.move(0, 1)
-                elif event_.key == pygame.K_LEFT:
-                    player.move(-1, 0)
-                elif event_.key == pygame.K_RIGHT:
-                    player.move(1, 0)
 
-            surface_manager.render()
+        keys = pygame.key.get_pressed()
+        player_move_vector = CoordPair()
+        if keys[pygame.K_UP]:
+            player_move_vector += CoordPair(0, -1)
+        if keys[pygame.K_DOWN]:
+            player_move_vector += CoordPair(0, 1)
+        if keys[pygame.K_LEFT]:
+            player_move_vector += CoordPair(-1, 0)
+        if keys[pygame.K_RIGHT]:
+            player_move_vector += CoordPair(1, 0)
+        if player_move_vector != (0, 0):
+            victory = player.move(player_move_vector, maze)
+            if victory:
+                event_handler.user_message(surface_manager, f"You managed to escape", FONT_SIZE)
+                escapes += 1
+                maze.randomize_victory_cell()
+                refresh(surface_manager, maze)
+
+            surface_manager.update_play_surface(player)
+
+        clock.tick(FPS)
+        surface_manager.render()
 
     pygame.quit()
 

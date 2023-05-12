@@ -14,7 +14,7 @@ def wait_for_input():
                 return
 
 
-def user_message(surface_manager: SurfaceManager, text: str, font_size: int, point: Tuple[float, float]):
+def user_message(surface_manager: SurfaceManager, text: str, font_size: int):
     font_ = pygame.font.Font(None, font_size)
     surface_manager.update_text_surface(text, font_)
     surface_manager.show_text()
@@ -32,11 +32,11 @@ def read_endpoints(maze: Maze) -> Tuple[Cell, Cell]:
         click = pygame.event.wait()
         if click.type != pygame.MOUSEBUTTONDOWN:
             continue
-        y, x = tuple(int(value // width) for value in click.pos)
+        x, y = tuple(int(value // width) for value in click.pos)
         if click_num == 0:
-            start = maze.get_cell(x, y)
+            start = maze[x, y]
         else:
-            end = maze.get_cell(x, y)
+            end = maze[x, y]
         click_num += 1
     return start, end
 
@@ -44,9 +44,9 @@ def read_endpoints(maze: Maze) -> Tuple[Cell, Cell]:
 def handle_pathfinding_call(surface_manager: SurfaceManager, maze, algo: Callable[[Cell, Cell], PathfindingRes], path_color: tuple[int, int, int], cell_color: tuple[int, int, int]):
     start, end = read_endpoints(maze)
     pathfinding_res = algo(start, end)
-    for cell in pathfinding_res.affected_nodes:
-        cell.color = cell_color
-        cell.request_update()
+    # for cell in pathfinding_res.affected_nodes:
+    #     cell.color = cell_color
+    #     cell.request_update()
     surface_manager.update_path_surface(pathfinding_res.path, path_color)
     surface_manager.update_maze_surface(maze)
 

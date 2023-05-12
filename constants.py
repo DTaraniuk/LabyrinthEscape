@@ -12,13 +12,17 @@ TRANSPARENT = (0, 0, 0, 0)
 # endregion
 
 # region app params
-ROWS = 10
+ROWS = 20
+RAND_WALL_COUNT = ROWS//2
+FONT_SIZE = 30
 WIDTH = 800
 WALL_WIDTH = 3
 GRID_WIDTH = 1
 GRID = False
 IMG_FOLDER = 'img'
-PLAYER_IMG = 'rat.jpg'
+PLAYER_IMG = 'rat.png'
+PLAYER_SPEED = 2
+FPS = 60
 # endregion
 
 # region surfaces
