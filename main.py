@@ -6,6 +6,7 @@ from pathfinding import*
 from constants import*
 import event_handler
 from player import Player
+from minotaur import Minotaur
 from coordpair import CoordPair
 
 
@@ -18,6 +19,20 @@ def refresh(surface_manager, maze):
     maze.request_full_update()
     surface_manager.update_maze_surface(maze)
     surface_manager.clear_surface("path")
+
+
+def reset(surface_manager: SurfaceManager, player, minotaur):
+    maze = Maze(ROWS, WIDTH)
+    maze.generate_labyrinth()
+    surface_manager.update_maze_surface(maze)
+
+    center = (ROWS // 2 + 0.5) * maze.cell_width
+    player_start = CoordPair(center, center)
+    mino_start = maze.get_random_edge_cell().get_pos()
+
+    player.set_pos(player_start)
+    minotaur.set_pos(mino_start)
+    surface_manager.update_play_surface([player, minotaur])
 
 
 def init_surfaces(win: pgs) -> SurfaceManager:
@@ -38,9 +53,15 @@ def main(win: pgs) -> None:
     surface_manager.update_maze_surface(maze)
 
     center = (ROWS // 2 + 0.5) * maze.cell_width
+    player_start = CoordPair(center, center)
     player_img = pygame.image.load(f"{IMG_FOLDER}\\{PLAYER_IMG}")
-    player = Player(center, center, (maze.cell_width/2, maze.cell_width/2), player_img)
-    surface_manager.update_play_surface(player)
+    player = Player(player_start, (maze.cell_width/2, maze.cell_width/2), player_img)
+
+    mino_start = maze.get_random_edge_cell().get_pos()
+    minotaur_img = pygame.image.load(f"{IMG_FOLDER}\\{MINOTAUR_IMG}")
+    minotaur = Minotaur(mino_start, (maze.cell_width, maze.cell_width), minotaur_img)
+
+    surface_manager.update_play_surface([player, minotaur])
 
     clock = pygame.time.Clock()
     escapes: int = 0
@@ -65,13 +86,12 @@ def main(win: pgs) -> None:
                     # maze.process_cells(lambda cell: setattr(cell, 'color', WHITE))
                     refresh(surface_manager, maze)
                 elif event_.key == pygame.K_r:
-                    maze = Maze(ROWS, WIDTH)
-                    maze.generate_labyrinth()
-                    surface_manager.update_maze_surface(maze)
+                    reset(surface_manager, player, minotaur)
                 elif event_.key == pygame.K_g:
                     surface_manager.toggle_grid_surface()
                     maze.request_full_update()
 
+        # move player
         keys = pygame.key.get_pressed()
         player_move_vector = CoordPair()
         if keys[pygame.K_UP]:
@@ -82,15 +102,20 @@ def main(win: pgs) -> None:
             player_move_vector += CoordPair(-1, 0)
         if keys[pygame.K_RIGHT]:
             player_move_vector += CoordPair(1, 0)
-        if player_move_vector != (0, 0):
-            victory = player.move(player_move_vector, maze)
+        if player_move_vector != CoordPair():
+            victory = player.player_move(player_move_vector, maze)
             if victory:
-                event_handler.user_message(surface_manager, f"You managed to escape", FONT_SIZE)
                 escapes += 1
+                event_handler.user_message(surface_manager, f"You managed to escape {escapes} times", FONT_SIZE)
                 maze.randomize_victory_cell()
                 refresh(surface_manager, maze)
 
-            surface_manager.update_play_surface(player)
+        # move minotaur
+        loss = minotaur.chase_player(maze, player)
+        if loss:
+            event_handler.user_message(surface_manager, f"You have been slain by the minotaur", FONT_SIZE)
+            reset(surface_manager, player, minotaur)
+        surface_manager.update_play_surface([player, minotaur])
 
         clock.tick(FPS)
         surface_manager.render()

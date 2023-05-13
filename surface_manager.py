@@ -85,10 +85,11 @@ class SurfaceManager:
         text_surface = create_text_frame(text, font_, text_color=PINK, frame_color=BLACK, padding=int(font_.get_height()/2), aspect_ratio=(3, 2))
         self.surfaces[SURFACE_TEXT] = text_surface
 
-    def update_play_surface(self, player: Player):
+    def update_play_surface(self, players: list[Player]):
         play_surface = self.surfaces[SURFACE_PLAY]
         play_surface.fill(TRANSPARENT)
-        play_surface.blit(player.image, (player.x, player.y))
+        for player in players:
+            play_surface.blit(player.image, player.get_pos().to_tuple())
 
     def show_text(self):
         text_surface: pgs = self.surfaces[SURFACE_TEXT]

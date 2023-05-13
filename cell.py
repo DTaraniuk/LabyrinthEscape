@@ -1,6 +1,8 @@
 import pygame
 from constants import*
 from typing import Tuple
+from direction import *
+from coordpair import CoordPair
 
 
 class Cell:
@@ -8,7 +10,7 @@ class Cell:
         self.index_in_row = row
         self.index_in_col = col
         self.width = width
-        self._neighbors: set['Cell'] = set()
+        self._neighbors: dict[Direction, 'Cell'] = {}
         self.total_rows = total_rows
         self.color: Tuple[int, int, int] = WHITE
         self.is_up_to_date = False
@@ -17,16 +19,17 @@ class Cell:
         return self.index_in_row + self.index_in_col < other.index_in_row + other.index_in_col
 
     def is_neighbor(self, other) -> bool:
-        return other in self._neighbors
+        return other in self._neighbors.values()
 
-    def get_neighbors(self) -> list['Cell']:
-        res = []
-        res.extend(self._neighbors)
-        return res
+    def get_neighbors(self) -> dict[Direction, 'Cell']:
+        return self._neighbors.copy()
 
-    def add_neighbor(self, other: 'Cell'):
-        self._neighbors.add(other)
-        other._neighbors.add(self)
+    def add_neighbor(self, other: 'Cell', dir_: Direction = None):
+        if dir_ is None:
+            dir_ = get_direction(self.get_distance(other))
+        if dir_ is not None:
+            self._neighbors[dir_] = other
+            other._neighbors[dir_.opposite()] = self
 
     def request_update(self):
         self.is_up_to_date = False
@@ -37,8 +40,11 @@ class Cell:
     def get_index(self) -> Tuple[int, int]:
         return self.index_in_row, self.index_in_col
 
-    def get_pos(self) -> Tuple[float, float]:
-        return self.index_in_row * self.width, self.index_in_col * self.width
+    def get_pos(self) -> CoordPair:
+        return CoordPair(self.index_in_row * self.width, self.index_in_col * self.width)
+
+    def get_distance(self, other: 'Cell') -> CoordPair:
+        return CoordPair(other.index_in_row-self.index_in_row, other.index_in_col-self.index_in_col)
 
     def draw(self, win: pygame.Surface) -> None:
         if self.is_up_to_date:
@@ -47,36 +53,31 @@ class Cell:
         x, y = self.index_in_row * width, self.index_in_col * width
         pygame.draw.rect(win, self.color, (x, y, width, width))
 
-        sides = {'U', 'D', 'L', 'R'}
-        for neighbor in self._neighbors:
-            if neighbor.index_in_col == self.index_in_col and neighbor.index_in_row == self.index_in_row + 1:  # RIGHT
-                sides.remove('R')
-            if neighbor.index_in_col == self.index_in_col and neighbor.index_in_row == self.index_in_row - 1:  # LEFT
-                sides.remove('L')
-            if neighbor.index_in_col == self.index_in_col + 1 and neighbor.index_in_row == self.index_in_row:  # DOWN
-                sides.remove('D')
-            if neighbor.index_in_col == self.index_in_col - 1 and neighbor.index_in_row == self.index_in_row:  # UP
-                sides.remove('U')
-        for i in sides:
+        sides = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST}
+        for direction in self._neighbors.keys():
+            if direction in sides:
+                sides.remove(direction)
+
+        for direction in sides:
             wx1: int = x
             wx2: int = x
             wy1: int = y
             wy2: int = y
-            if 'D' == i:  # DOWN
+            if direction == Direction.SOUTH:  # DOWN
                 wx2 += width
                 wy1 += width
                 wy2 += width
-            if 'U' == i:  # UP
+            if direction == Direction.NORTH:  # UP
                 wx2 += width
-            if 'R' == i:  # RIGHT
+            if direction == Direction.EAST:  # RIGHT
                 wx1 += width
                 wx2 += width
                 wy2 += width
-            if 'L' == i:  # LEFT
+            if direction == Direction.WEST:  # LEFT
                 wy2 += width
-            pygame.draw.line(win, BLACK, (wx1, wy1), (wx2, wy2), WALL_WIDTH*2)
+            pygame.draw.line(win, BLACK, (wx1, wy1), (wx2, wy2), WALL_WIDTH * 2)
 
-    def get_center(self) -> tuple[float, float]:
-        x = self.index_in_col + self.width / 2
-        y = self.index_in_row + self.width / 2
-        return x, y
+    def get_center(self) -> CoordPair:
+        x = (self.index_in_row + 0.5)*self.width
+        y = (self.index_in_col + 0.5)*self.width
+        return CoordPair(x, y)

@@ -2,6 +2,8 @@ import random
 from cell import Cell
 from typing import Callable, Optional
 from constants import *
+from direction import Direction
+from coordpair import CoordPair
 
 
 class Maze:
@@ -31,18 +33,18 @@ class Maze:
         self._victory_cell = value
 
     def carve_path(self, x: int, y: int, cell_visit_data: list[list[int]], max_visits: int) -> None:
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        directions = list(Direction)
         random.shuffle(directions)
 
         cell: Cell = self.maze[x][y]
         cell_visit_data[x][y] += 1
 
-        for dx, dy in directions:
+        for direction in directions:
+            dx, dy = direction.value
             nx, ny = x + dx, y + dy
             if 0 <= nx < self.row_num and 0 <= ny < self.row_num and cell_visit_data[nx][ny] < max_visits:
                 neighbor: Cell = self.maze[nx][ny]
-                neighbor._neighbors.add(cell)
-                cell._neighbors.add(neighbor)
+                cell.add_neighbor(neighbor, direction)
                 self.carve_path(nx, ny, cell_visit_data, max_visits)
 
     def generate_labyrinth(self) -> None:
@@ -88,23 +90,28 @@ class Maze:
         x, y = index
         return self.maze[x][y]
 
-    def get_cell(self, x: [float, int], y: [float, int]) -> Optional[Cell]:
-        index: tuple[int, int] = int(x // self.cell_width), int(y // self.cell_width)
+    def get_cell(self, coords: CoordPair) -> Optional[Cell]:
+        index: tuple[int, int] = int(coords.x // self.cell_width), int(coords.y // self.cell_width)
         return self[index]
 
-    def randomize_victory_cell(self):
-        if self._victory_cell:
-            self._victory_cell.color = WHITE
+    def get_random_edge_cell(self):
         edge_length = self.row_num
         edge_choice = random.choice(["top", "bottom", "left", "right"])
 
         if edge_choice == "top":
-            self.victory_cell = self[0, random.randint(0, edge_length - 1)]
+            res = self[0, random.randint(0, edge_length - 1)]
         elif edge_choice == "bottom":
-            self.victory_cell = self[edge_length - 1, random.randint(0, edge_length - 1)]
+            res = self[edge_length - 1, random.randint(0, edge_length - 1)]
         elif edge_choice == "left":
-            self.victory_cell = self[random.randint(0, edge_length - 1), 0]
+            res = self[random.randint(0, edge_length - 1), 0]
         else:  # edge_choice == "right"
-            self.victory_cell = self[random.randint(0, edge_length - 1), edge_length - 1]
+            res = self[random.randint(0, edge_length - 1), edge_length - 1]
 
+        return res
+
+    def randomize_victory_cell(self):
+        if self._victory_cell:
+            self._victory_cell.color = WHITE
+
+        self.victory_cell = self.get_random_edge_cell()
         self.victory_cell.color = PINK

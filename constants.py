@@ -12,17 +12,22 @@ TRANSPARENT = (0, 0, 0, 0)
 # endregion
 
 # region app params
-ROWS = 20
+EPS = 1e-10
+ROWS = 10
 RAND_WALL_COUNT = ROWS//2
 FONT_SIZE = 30
-WIDTH = 800
+WIDTH = 1200
 WALL_WIDTH = 3
 GRID_WIDTH = 1
 GRID = False
 IMG_FOLDER = 'img'
 PLAYER_IMG = 'rat.png'
-PLAYER_SPEED = 2
+MINOTAUR_IMG = 'minotaur.png'
 FPS = 60
+_secs_to_pass_cell = 1
+PLAYER_SPEED = int(WIDTH/ROWS/FPS/_secs_to_pass_cell)
+PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1  # for smoothness, this has to be int, but > 0 ofc
+MINOTAUR_SPEED = PLAYER_SPEED
 # endregion
 
 # region surfaces

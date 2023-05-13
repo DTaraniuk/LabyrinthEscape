@@ -12,6 +12,9 @@ class PathfindingRes:
         self.path: List[Cell] = []
         self.affected_nodes: set[Cell] = set({})
 
+    def __getitem__(self, index: int):
+        return self.path[index]
+
 
 def heuristic(node: Cell, goal: Cell) -> int:
     # Calculate the Manhattan distance between two nodes
@@ -48,13 +51,14 @@ def astar(start: Cell, goal: Cell) -> PathfindingRes:
                 current = parents[current]
             res.affected_nodes = g_scores.keys()  # Return the reversed path
             res.path = path
+            res.path.reverse()
             return res
 
         # Add the current node to the closed set
         closed_set.add(current)
 
         # Explore the neighboring nodes
-        for neighbor in current._neighbors:
+        for neighbor in current.get_neighbors().values():
             # Calculate the g-score for the neighbor
             g_score = g_scores[current] + 1
 
@@ -87,7 +91,7 @@ def dfs_path(start: Cell, goal: Cell) -> PathfindingRes:
                 res.path = path
                 return res  # Return the path if the goal is reached
 
-            for neighbor in node._neighbors:
+            for neighbor in node.get_neighbors().values():
                 if neighbor not in res.affected_nodes:
                     stack.append((neighbor, path + [neighbor]))
 
@@ -105,7 +109,7 @@ def bfs_path(start: Cell, goal: Cell) -> PathfindingRes:
             if node == goal:
                 res.path = path
                 return res
-            for neighbor in node._neighbors:
+            for neighbor in node.get_neighbors().values():
                 if neighbor in res.affected_nodes:
                     continue
                 neighbor_path = path + [neighbor]
