@@ -21,7 +21,7 @@ def refresh(surface_manager, maze):
     surface_manager.clear_surface("path")
 
 
-def reset(surface_manager: SurfaceManager, player, minotaur):
+def reset(surface_manager: SurfaceManager, player, minotaur) -> Maze:
     maze = Maze(ROWS, WIDTH)
     maze.generate_labyrinth()
     surface_manager.update_maze_surface(maze)
@@ -33,6 +33,7 @@ def reset(surface_manager: SurfaceManager, player, minotaur):
     player.set_pos(player_start)
     minotaur.set_pos(mino_start)
     surface_manager.update_play_surface([player, minotaur])
+    return maze
 
 
 def init_surfaces(win: pgs) -> SurfaceManager:
@@ -86,7 +87,7 @@ def main(win: pgs) -> None:
                     # maze.process_cells(lambda cell: setattr(cell, 'color', WHITE))
                     refresh(surface_manager, maze)
                 elif event_.key == pygame.K_r:
-                    reset(surface_manager, player, minotaur)
+                    maze = reset(surface_manager, player, minotaur)
                 elif event_.key == pygame.K_g:
                     surface_manager.toggle_grid_surface()
                     maze.request_full_update()
@@ -114,7 +115,7 @@ def main(win: pgs) -> None:
         loss = minotaur.chase_player(maze, player)
         if loss:
             event_handler.user_message(surface_manager, f"You have been slain by the minotaur", FONT_SIZE)
-            reset(surface_manager, player, minotaur)
+            maze = reset(surface_manager, player, minotaur)
         surface_manager.update_play_surface([player, minotaur])
 
         clock.tick(FPS)
