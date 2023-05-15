@@ -41,7 +41,7 @@ def read_endpoints(maze: Maze) -> Tuple[Cell, Cell]:
     return start, end
 
 
-def handle_pathfinding_call(surface_manager: SurfaceManager, maze, algo: Callable[[Cell, Cell], PathfindingRes], path_color: tuple[int, int, int], cell_color: tuple[int, int, int]):
+def handle_pathfinding_call(surface_manager: SurfaceManager, maze, algo: Callable[[Cell, Cell], PathfindingRes], path_color: tuple[int, int, int]):
     start, end = read_endpoints(maze)
     pathfinding_res = algo(start, end)
     # for cell in pathfinding_res.affected_nodes:
@@ -49,6 +49,3 @@ def handle_pathfinding_call(surface_manager: SurfaceManager, maze, algo: Callabl
     #     cell.request_update()
     surface_manager.update_path_surface(pathfinding_res.path, path_color)
     surface_manager.update_maze_surface(maze)
-
-
-

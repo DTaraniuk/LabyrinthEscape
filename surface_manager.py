@@ -37,15 +37,19 @@ class SurfaceManager:
         for cell in maze.get_cells():
             cell.mark_updated()
 
-    def render(self, rect_list: list[pygame.Rect] = None):
+    def render(self, rect_list: list[pygame.Rect] = None, maze: Maze = None):
         main_surface: pgs = self.surfaces.get(SURFACE_MAIN)
-        main_surface.fill(BLACK)
+        main_surface.fill(GREY)
 
         if rect_list is not None:
             for rect in rect_list:
                 for surface in self.surfaces.values():
                     main_surface.blit(surface, rect, area=rect)
             pygame.display.update(rect_list)
+        # elif maze is not None:
+        #     rect_list = []
+        #     for cell in maze.get_cells():
+        #         rect_list.append(pygame.Rect(cell.get_pos().to_tuple(), (cell.width, cell.width)))
         else:
             dest = (0, 0)
             for surface in self.surfaces.values():
@@ -85,11 +89,12 @@ class SurfaceManager:
         text_surface = create_text_frame(text, font_, text_color=PINK, frame_color=BLACK, padding=int(font_.get_height()/2), aspect_ratio=(3, 2))
         self.surfaces[SURFACE_TEXT] = text_surface
 
-    def update_play_surface(self, players: list[Player]):
+    def update_play_surface(self, players: list[Player], maze: Maze):
         play_surface = self.surfaces[SURFACE_PLAY]
         play_surface.fill(TRANSPARENT)
         for player in players:
-            play_surface.blit(player.image, player.get_pos().to_tuple())
+            if maze.get_cell(player.get_center()).color == WHITE:
+                play_surface.blit(player.image, player.get_pos().to_tuple())
 
     def show_text(self):
         text_surface: pgs = self.surfaces[SURFACE_TEXT]

@@ -27,7 +27,8 @@ FPS = 60
 _secs_to_pass_cell = 1
 PLAYER_SPEED = int(WIDTH/ROWS/FPS/_secs_to_pass_cell)
 PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1  # for smoothness, this has to be int, but > 0 ofc
-MINOTAUR_SPEED = PLAYER_SPEED
+PLAYER_MEM_SIZE = 400
+MINOTAUR_SPEED = PLAYER_SPEED/2
 # endregion
 
 # region surfaces

@@ -6,6 +6,11 @@ from direction import Direction
 from coordpair import CoordPair
 
 
+def request_update(cells: list[Cell]):
+    for c in cells:
+        c.request_update()
+
+
 class Maze:
     def __init__(self, rows: int = None, width: int = None):
         self.maze: list[list[Cell]] = []
@@ -47,6 +52,26 @@ class Maze:
                 cell.add_neighbor(neighbor, direction)
                 self.carve_path(nx, ny, cell_visit_data, max_visits)
 
+    def remove_random_walls(self, wall_count: int) -> int:
+        shuffled_cells: list[Cell] = self.get_cells()
+        random.shuffle(shuffled_cells)
+        directions = list(Direction)
+        cnt = 0
+        for cell in shuffled_cells:
+            if cnt == wall_count:
+                return cnt
+            random.shuffle(directions)
+            for direction in directions:
+                dx, dy = direction.value
+                x, y = cell.get_index()
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.row_num and 0 <= ny < self.row_num:
+                    candidate_cell = self[nx, ny]
+                    if not cell.is_neighbor(candidate_cell):
+                        cell.add_neighbor(candidate_cell)
+                        cnt += 1
+                        break
+
     def generate_labyrinth(self) -> None:
         cell_visit_data: list[list[int]] = []
         for row_i in range(self.row_num):
@@ -56,21 +81,7 @@ class Maze:
         start_x, start_y = random.randrange(0, self.row_num), random.randrange(0, self.row_num)
         self.carve_path(start_x, start_y, cell_visit_data, 1)
 
-        rand_wall_frequency = int(self.row_num**2//RAND_WALL_COUNT)
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        shuffled_cells: list[Cell] = self.get_cells()
-        random.shuffle(shuffled_cells)
-        for i, cell in enumerate(shuffled_cells):
-            if i % rand_wall_frequency == 0:
-                random.shuffle(directions)
-                for dx, dy in directions:
-                    x, y = cell.get_index()
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < self.row_num and 0 <= ny < self.row_num:
-                        candidate_cell = self[nx, ny]
-                        if not cell.is_neighbor(candidate_cell):
-                            cell.add_neighbor(candidate_cell)
-                            break
+        self.remove_random_walls(RAND_WALL_COUNT)
 
     def get_cells(self) -> list[Cell]:
         res = []
@@ -79,7 +90,7 @@ class Maze:
                 res.append(cell)
         return res
 
-    def process_cells(self, operation: Callable[[Cell], object]):
+    def process_cells(self, operation: Callable[[Cell], None]):
         for cell in self.get_cells():
             operation(cell)
 
@@ -110,8 +121,8 @@ class Maze:
         return res
 
     def randomize_victory_cell(self):
-        if self._victory_cell:
-            self._victory_cell.color = WHITE
+        # if self._victory_cell:
+        #     self._victory_cell.color = WHITE
 
         self.victory_cell = self.get_random_edge_cell()
-        self.victory_cell.color = PINK
+        # self.victory_cell.color = PINK

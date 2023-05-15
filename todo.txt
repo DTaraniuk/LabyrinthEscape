@@ -1,3 +1,2 @@
 rework labyrinth generation to eliminate tree-like structures with 0 chance of winning
-change minotaur logic to chase the player instead of cell player is currently in
-DISTANT limit player vision and change game logic and graphics accordingly
+DISTANT limit player vision and change game logic and graphics accordingly - partially

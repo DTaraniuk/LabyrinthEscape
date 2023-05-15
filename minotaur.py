@@ -11,19 +11,11 @@ class Minotaur(Player):
         super().__init__(pos, size, img)
         self.speed = MINOTAUR_SPEED
 
-    def chase_player(self, maze: Maze, player: Player) -> bool:
-        # victory check
-        curr_pos = self.get_center()
-        curr_cell = maze.get_cell(curr_pos)
+    def chase_player(self, maze: Maze, player: Player) -> None:
+        curr_cell = maze.get_cell(self.get_center())
         player_cell = maze.get_cell(player.get_center())
-        if player_cell == curr_cell:
-            return True
-
         path: PathfindingRes = astar(curr_cell, player_cell)
-        if not path[0] == curr_cell:
-            raise RuntimeError(f"{path[0]} does not equal {curr_cell}. Astar fail")
-        next_cell = path[1]
-        move_direction = get_move_direction(self.get_center(), next_cell.get_center())
-        self.move(move_direction, maze)
-
-        return False
+        if path.path.__len__() == 1:
+            self.move_direction = get_move_direction(self.get_center(), player.get_center())
+        else:
+            self.move_direction = get_move_direction(self.get_center(), path[1].get_center())

@@ -12,7 +12,7 @@ class Cell:
         self.width = width
         self._neighbors: dict[Direction, 'Cell'] = {}
         self.total_rows = total_rows
-        self.color: Tuple[int, int, int] = WHITE
+        self.color: Tuple[int, int, int] = BLACK
         self.is_up_to_date = False
 
     def __lt__(self, other):
@@ -81,3 +81,17 @@ class Cell:
         x = (self.index_in_row + 0.5)*self.width
         y = (self.index_in_col + 0.5)*self.width
         return CoordPair(x, y)
+
+    def get_visible_cells(self) -> list['Cell']:
+        res = [self]
+        for dir_, neighbor in self.get_neighbors().items():
+            res.append(neighbor)
+            while dir_ in neighbor.get_neighbors().keys():
+                neighbor = neighbor.get_neighbors()[dir_]
+                res.append(neighbor)
+        return res
+
+    def change_color(self, new_color):
+        if new_color != self.color:
+            self.color = new_color
+            self.request_update()
