@@ -1,4 +1,3 @@
-import random
 import constants
 from player import Player
 from minotaur import Minotaur
