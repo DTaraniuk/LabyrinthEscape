@@ -12,7 +12,7 @@ class Cell:
         self.width = width
         self._neighbors: dict[Direction, 'Cell'] = {}
         self.total_rows = total_rows
-        self.color: Tuple[int, int, int] = BLACK
+        self.color: Tuple[int, int, int] = WHITE
         self.is_up_to_date = False
 
     def __lt__(self, other):

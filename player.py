@@ -13,6 +13,7 @@ class Player:
         self._y: float = pos.y
         self.size = size
         self.speed = PLAYER_SPEED
+        self.is_alive = True
         self.move_direction: CoordPair = CoordPair()
         if img is not None:
             player_surface = img.convert_alpha()

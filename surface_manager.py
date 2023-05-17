@@ -37,7 +37,7 @@ class SurfaceManager:
         for cell in maze.get_cells():
             cell.mark_updated()
 
-    def render(self, rect_list: list[pygame.Rect] = None, maze: Maze = None):
+    def render(self, rect_list: list[pygame.Rect] = None):
         main_surface: pgs = self.surfaces.get(SURFACE_MAIN)
         main_surface.fill(GREY)
 
@@ -45,16 +45,11 @@ class SurfaceManager:
             for rect in rect_list:
                 for surface in self.surfaces.values():
                     main_surface.blit(surface, rect, area=rect)
-            pygame.display.update(rect_list)
-        # elif maze is not None:
-        #     rect_list = []
-        #     for cell in maze.get_cells():
-        #         rect_list.append(pygame.Rect(cell.get_pos().to_tuple(), (cell.width, cell.width)))
         else:
             dest = (0, 0)
             for surface in self.surfaces.values():
                 main_surface.blit(surface, dest)
-            pygame.display.flip()
+        pygame.display.flip()
 
     def update_path_surface(self, path: list[Cell], path_color) -> bool:
         path_surface = self.surfaces[SURFACE_PATH]

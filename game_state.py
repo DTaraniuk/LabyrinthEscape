@@ -1,11 +1,12 @@
+import random
 import constants
-import maze
 from player import Player
 from minotaur import Minotaur
 from maze import Maze
 from cell import Cell
 from direction import *
 from collections import deque
+from constants import *
 
 
 def index_string(n: int) -> str:
@@ -17,59 +18,63 @@ def index_string(n: int) -> str:
 
 
 class GameState:
-    def __init__(self, player: Player, minotaur: Minotaur, maze: Maze):
-        self.player = player
+    def __init__(self, minotaur: Minotaur, maze: Maze):
+        self.players: list[Player] = []
         self.minotaur = minotaur
         self.maze = maze
-        self._player_mem: deque[tuple[int, list[Cell]]] = deque()
+        self._all_player_mem: dict[Player, deque[tuple[int, list[Cell]]]] = {}
         self.time = 0
         self.escapes = 0
 
+    def add_player(self, player: Player):
+        self._all_player_mem[player] = deque()
+        self.players.append(player)
+
     def advance_timeline(self, frames):
         self.time += frames
-        self._move_player(self.player, frames)
-        self.minotaur.chase_player(self.maze, self.player)
+        for player in self.players:
+            if not player.is_alive:
+                continue
+            self._move_player(player, frames)
+            self._update_player_vision(player)
+        self.minotaur.chase_player(self.maze, self.players)
         self._move_player(self.minotaur, frames)
-        self._update_player_vision()
 
-    def _update_player_vision(self):
-        player_cell = self.maze.get_cell(self.player.get_center())
-        current_vision = player_cell.get_visible_cells()
-        if not self._player_mem or self._player_mem[-1][1] != current_vision:
-            self._player_mem.append((self.time, current_vision))
-        else:
-            self._player_mem[-1] = (self.time, self._player_mem[-1][1])
-        while self._player_mem and self.time - self._player_mem[0][0] > constants.PLAYER_MEM_SIZE:
-            self._player_mem.popleft()
-
-        vision = self.get_complete_vision()
-
-        def paint_cell(cell):
-            if cell in vision:
-                cell.change_color(constants.WHITE)
-            else:
-                cell.change_color(constants.BLACK)
-
-        self.maze.process_cells(paint_cell)
-
-    def get_complete_vision(self) -> set[Cell]:
-        res = set()
-        for vision in self._player_mem:
-            for cell in vision[1]:
-                res.add(cell)
+    def get_player_vision(self, player: Player) -> set[Cell]:
+        player_mem = self._all_player_mem[player]
+        res: set[Cell] = set()
+        for mem_entry in player_mem:
+            res.update(mem_entry[1])
         return res
 
-    def check_win_lose(self) -> Optional[bool]:
-        player_cell = self.maze.get_cell(self.player.get_center())
+    def _update_player_vision(self, player: Player):
+        player_cell = self.maze.get_cell(player.get_center())
+        current_vision = player_cell.get_visible_cells()
+        if not self._all_player_mem[player] or self._all_player_mem[player][-1][1] != current_vision:
+            self._all_player_mem[player].append((self.time, current_vision))
+        else:
+            self._all_player_mem[player][-1] = (self.time, self._all_player_mem[player][-1][1])
+        while self._all_player_mem and self.time - self._all_player_mem[player][0][0] > constants.PLAYER_MEM_SIZE:
+            self._all_player_mem[player].popleft()
+
+    def check_win_lose(self) -> Optional[dict[Player, bool]]:
+        res = {}
         minotaur_cell = self.maze.get_cell(self.minotaur.get_center())
+        for player in self.players:
+            player_cell = self.maze.get_cell(player.get_center())
 
-        if player_cell == minotaur_cell:
-            return False
-        if player_cell == self.maze.victory_cell:
-            self.escapes += 1
-            return True
+            res[player] = player_cell == minotaur_cell
+            if res[player]:
+                self.kill_player(player)
 
-        return None
+            if player_cell == self.maze.victory_cell:
+                self.escapes += 1
+                return None
+        return res
+
+    def kill_player(self, player):
+        player.is_alive = False
+        self._all_player_mem[player].clear()
 
     def _move_player(self, player: Player, frames: int):
         x, y = player.get_center()
@@ -101,3 +106,16 @@ class GameState:
                 target_y_cell.request_update()
 
         player.center(target_x, target_y)
+
+    def reset(self):
+        self.maze = Maze(ROWS, WIDTH)
+        self.maze.generate_labyrinth()
+
+        center = (ROWS // 2 + 0.5) * self.maze.cell_width
+        player_start = CoordPair(center, center)
+        mino_start = self.maze.get_random_edge_cell().get_pos()
+        self.minotaur.set_pos(mino_start)
+
+        for player in self.players:
+            player.is_alive = True
+            player.set_pos(player_start)

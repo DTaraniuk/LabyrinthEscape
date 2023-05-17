@@ -12,6 +12,7 @@ import event_handler
 from player import Player
 from minotaur import Minotaur
 from coordpair import CoordPair
+from renderer import Renderer
 
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
@@ -22,22 +23,6 @@ def refresh(surface_manager, maze):
     maze.request_full_update()
     surface_manager.update_maze_surface(maze)
     surface_manager.clear_surface("path")
-
-
-def reset(surface_manager: SurfaceManager, gs: GameState, player, minotaur) -> Maze:
-    new_maze = Maze(ROWS, WIDTH)
-    new_maze.generate_labyrinth()
-    surface_manager.update_maze_surface(new_maze)
-
-    center = (ROWS // 2 + 0.5) * new_maze.cell_width
-    player_start = CoordPair(center, center)
-    mino_start = new_maze.get_random_edge_cell().get_pos()
-
-    player.set_pos(player_start)
-    minotaur.set_pos(mino_start)
-    surface_manager.update_play_surface([player, minotaur])
-    gs.maze = new_maze
-    return new_maze
 
 
 def init_surfaces(win: pgs) -> SurfaceManager:
@@ -70,7 +55,9 @@ def main(win: pgs) -> None:
 
     clock = pygame.time.Clock()
 
-    gs = GameState(player, minotaur, maze)
+    gs = GameState(minotaur, maze)
+    gs.add_player(player)
+    player_renderer = Renderer(surface_manager, player)
 
     run = True
     event_handler.user_message(surface_manager, "Privet. Click to start", FONT_SIZE)
@@ -92,7 +79,7 @@ def main(win: pgs) -> None:
                     # maze.process_cells(lambda cell: setattr(cell, 'color', WHITE))
                     refresh(surface_manager, maze)
                 elif event_.key == pygame.K_r:
-                    maze = reset(surface_manager, gs, player, minotaur)
+                    gs.reset()
                 elif event_.key == pygame.K_g:
                     surface_manager.toggle_grid_surface()
                     maze.request_full_update()
@@ -113,20 +100,18 @@ def main(win: pgs) -> None:
         gs.advance_timeline(1)
 
         victory = gs.check_win_lose()
-        if victory is not None:
-            if victory:
-                event_handler.user_message(surface_manager, f"You have escaped for the {game_state.index_string(gs.escapes)} time", FONT_SIZE)
-                maze.randomize_victory_cell()
-                refresh(surface_manager, maze)
-            else:
-                event_handler.user_message(surface_manager, f"You have been slain by the minotaur", FONT_SIZE)
-                maze = reset(surface_manager, gs, player, minotaur)
-
-        surface_manager.update_maze_surface(maze)
-        surface_manager.update_play_surface([player, minotaur], maze)
+        if victory is None:
+            event_handler.user_message(surface_manager, f"You have escaped for the {game_state.index_string(gs.escapes)} time", FONT_SIZE)
+            maze.randomize_victory_cell()
+            refresh(surface_manager, maze)
+        else:
+            for player, is_dead in victory.items():
+                if is_dead:
+                    event_handler.user_message(surface_manager, f"You have been slain by the minotaur", FONT_SIZE)
+                    gs.reset()
 
         clock.tick(FPS)
-        surface_manager.render(maze=maze)
+        player_renderer.render(gs)
 
     pygame.quit()
 
