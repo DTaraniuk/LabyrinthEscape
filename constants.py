@@ -17,7 +17,7 @@ ROWS = 10
 RAND_WALL_COUNT = ROWS//2
 FONT_SIZE = 30
 WIDTH = 1200
-WALL_WIDTH = 3
+WALL_WIDTH = 2
 GRID_WIDTH = 1
 GRID = False
 IMG_FOLDER = 'img'
@@ -29,6 +29,7 @@ PLAYER_SPEED = int(WIDTH/ROWS/FPS/_secs_to_pass_cell)
 PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1  # for smoothness, this has to be int, but > 0 ofc
 PLAYER_MEM_SIZE = 400
 MINOTAUR_SPEED = PLAYER_SPEED/2
+KILL_DIST = WIDTH/ROWS/3
 # endregion
 
 # region surfaces

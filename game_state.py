@@ -1,4 +1,6 @@
+import math
 import constants
+import helper
 from player import Player
 from minotaur import Minotaur
 from maze import Maze
@@ -17,27 +19,30 @@ def index_string(n: int) -> str:
 
 
 class GameState:
-    def __init__(self, minotaur: Minotaur, maze: Maze):
+    def __init__(self, maze: Maze):
         self.players: list[Player] = []
-        self.minotaur = minotaur
+        self.minotaur = None
         self.maze = maze
         self._all_player_mem: dict[Player, deque[tuple[int, list[Cell]]]] = {}
         self.time = 0
         self.escapes = 0
 
-    def add_player(self, player: Player):
-        self._all_player_mem[player] = deque()
+    def add_player(self, player: Player):  # if there is no minotaur, add as minotaur
+        if self.minotaur is None:
+            if isinstance(player, Minotaur):
+                self.minotaur = player
+            else:
+                mino = Minotaur(player.get_pos(), player.size, helper.load_image(MINOTAUR_IMG))
+                self.minotaur = mino
         self.players.append(player)
+        self._all_player_mem[player] = deque()
 
     def advance_timeline(self, frames):
         self.time += frames
+        self.minotaur.chase_player(self.maze, self.players)
         for player in self.players:
-            if not player.is_alive:
-                continue
             self._move_player(player, frames)
             self._update_player_vision(player)
-        self.minotaur.chase_player(self.maze, self.players)
-        self._move_player(self.minotaur, frames)
 
     def get_player_vision(self, player: Player) -> set[Cell]:
         player_mem = self._all_player_mem[player]
@@ -58,11 +63,14 @@ class GameState:
 
     def check_win_lose(self) -> Optional[dict[Player, bool]]:
         res = {}
-        minotaur_cell = self.maze.get_cell(self.minotaur.get_center())
         for player in self.players:
+            if player == self.minotaur:
+                continue
             player_cell = self.maze.get_cell(player.get_center())
 
-            res[player] = player_cell == minotaur_cell
+            dist = player.get_center() - self.minotaur.get_center()
+            abs_dist = math.sqrt(abs(dist.x)**2 + abs(dist.y)**2)
+            res[player] = abs_dist < KILL_DIST
             if res[player]:
                 self.kill_player(player)
 
@@ -116,5 +124,7 @@ class GameState:
         self.minotaur.set_pos(mino_start)
 
         for player in self.players:
+            if player == self.minotaur:
+                continue
             player.is_alive = True
             player.set_pos(player_start)

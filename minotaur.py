@@ -9,14 +9,18 @@ import pygame
 
 
 class Minotaur(Player):
-    def __init__(self, pos: CoordPair, size: tuple[int, int], img: pygame.Surface = None):
+    def __init__(self, pos: CoordPair, size: tuple[int, int], img: pygame.Surface = None, is_player_controlled=False):
         super().__init__(pos, size, img)
         self.speed = MINOTAUR_SPEED
         self.chased_player = None
+        self.is_player_controlled = is_player_controlled
 
     def chase_player(self, maze: Maze, players: list[Player]) -> None:
+        if self.is_player_controlled:
+            return
+        players_without_self = [p for p in players if p != self]
         if self.chased_player is None:
-            self.chased_player = random.choice(players)
+            self.chased_player = random.choice(players_without_self)
         curr_cell = maze.get_cell(self.get_center())
         player_cell = maze.get_cell(self.chased_player.get_center())
         path: PathfindingRes = astar(curr_cell, player_cell)

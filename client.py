@@ -1,67 +1,63 @@
 import pygame
 import socket
 import pickle
-from coordpair import CoordPair
+import helper
+from threading import Thread
 from renderer import Renderer
-from surface_manager import SurfaceManager
-from main import init_surfaces
-from constants import *
-import event_handler
 
-# The server's hostname or IP address
-HOST = 'localhost'
-# The port used by the server
-PORT = 12345
+pygame.init()
+win = pygame.display.set_mode((800, 800))  # Create window with 800x800 resolution
 
+SERVER = "127.0.0.1"  # The IP of the server
+PORT = 7777  # The port of the server
+ADDR = (SERVER, PORT)
 
-def main(win: pygame.Surface) -> None:
-    pygame.init()
-    surface_manager = init_surfaces(win)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    clock = pygame.time.Clock()
+# Connect to the server
+print("Connecting to the server...")
+client.connect(ADDR)
+print("Connected to the server.")
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((HOST, PORT))
-
-        # Initially receive the game state from the server
-        data = s.recv(1024)
-        gs = pickle.loads(data)
-        player = gs.get_player("player_name")  # replace "player_name" with actual player name
-        player_renderer = Renderer(surface_manager, player)
-
-        run = True
-        event_handler.user_message(surface_manager, "Privet. Click to start", FONT_SIZE)
-        surface_manager.render()
-        while run:
-            for event_ in pygame.event.get():
-                if event_.type == pygame.QUIT:
-                    run = False
-                    break
-            # move player
-            keys = pygame.key.get_pressed()
-            player_move_vector = CoordPair()
-            if keys[pygame.K_UP]:
-                player_move_vector += CoordPair(0, -1)
-            if keys[pygame.K_DOWN]:
-                player_move_vector += CoordPair(0, 1)
-            if keys[pygame.K_LEFT]:
-                player_move_vector += CoordPair(-1, 0)
-            if keys[pygame.K_RIGHT]:
-                player_move_vector += CoordPair(1, 0)
-
-            # Send player move vector to server
-            data = pickle.dumps(player_move_vector)
-            s.sendall(data)
-
-            # Receive updated game state from server
-            data = s.recv(1024)
-            gs = pickle.loads(data)
-
-            clock.tick(FPS)
-            player_renderer.render(gs)
-
-    pygame.quit()
+# Receive player ID from the server
+print("Receiving player ID...")
+received_data = client.recv(4)
+player_id = int.from_bytes(received_data, byteorder='big')
+print(f"Received player ID: {player_id}")
 
 
-WIN = pygame.display.set_mode((WIDTH, WIDTH))
-main(WIN)
+def handle_server_data(client_):
+    while True:
+        try:
+            print("Waiting for data from server...")
+            # Receive data from the server
+            game_state = helper.recv_message(client_)
+            print("Received data from server.")
+            print("Data loaded successfully.")
+
+            # Pass the game_state to the renderer
+            renderer.update_surfaces(game_state)
+            renderer.render(game_state)
+
+        except Exception as e:
+            print(f"Error: {e}")
+            break
+
+
+# Create the renderer with the player
+renderer = Renderer(win, player_id)
+
+# Start the thread to handle data from the server
+Thread(target=handle_server_data, args=(client,), daemon=True).start()
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+
+        # Handle key press events for player movement
+        player_move_vector = helper.input_movement()
+
+        print("Sending player move vector to server...")
+        helper.send_message(client, player_move_vector)
+        print("Player move vector sent.")

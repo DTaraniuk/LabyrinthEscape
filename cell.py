@@ -64,18 +64,18 @@ class Cell:
             wy1: int = y
             wy2: int = y
             if direction == Direction.SOUTH:  # DOWN
-                wx2 += width
-                wy1 += width
-                wy2 += width
+                wx2 += width - WALL_WIDTH
+                wy1 += width - WALL_WIDTH
+                wy2 += width - WALL_WIDTH
             if direction == Direction.NORTH:  # UP
                 wx2 += width
             if direction == Direction.EAST:  # RIGHT
-                wx1 += width
-                wx2 += width
-                wy2 += width
+                wx1 += width - WALL_WIDTH
+                wx2 += width - WALL_WIDTH
+                wy2 += width - WALL_WIDTH
             if direction == Direction.WEST:  # LEFT
                 wy2 += width
-            pygame.draw.line(win, BLACK, (wx1, wy1), (wx2, wy2), WALL_WIDTH * 2)
+            pygame.draw.line(win, RED, (wx1, wy1), (wx2, wy2), WALL_WIDTH)
 
     def get_center(self) -> CoordPair:
         x = (self.index_in_row + 0.5)*self.width

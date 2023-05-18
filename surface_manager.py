@@ -1,5 +1,6 @@
 import math
 import pygame
+import helper
 from constants import*
 from pygame import Surface as pgs
 from typing import Tuple
@@ -12,6 +13,13 @@ class SurfaceManager:
     def __init__(self, main_surface: pgs):
         self.show_grid = False
         self.surfaces: dict[str, pgs] = {SURFACE_MAIN: main_surface}
+
+    def init_surfaces(self):
+        scr_size = (WIDTH, WIDTH)
+        self.create_surface(SURFACE_MAZE, scr_size)
+        self.create_surface(SURFACE_GRID, scr_size)
+        self.create_surface(SURFACE_PATH, scr_size)
+        self.create_surface(SURFACE_PLAY, scr_size)
 
     def create_surface(self, name: str, size: Tuple[int, int]):
         self.surfaces[name] = pgs(size, pygame.SRCALPHA)
@@ -84,12 +92,11 @@ class SurfaceManager:
         text_surface = create_text_frame(text, font_, text_color=PINK, frame_color=BLACK, padding=int(font_.get_height()/2), aspect_ratio=(3, 2))
         self.surfaces[SURFACE_TEXT] = text_surface
 
-    def update_play_surface(self, players: list[Player], maze: Maze):
+    def update_play_surface(self, players: list[tuple[Player, pygame.Surface]]):
         play_surface = self.surfaces[SURFACE_PLAY]
         play_surface.fill(TRANSPARENT)
-        for player in players:
-            if maze.get_cell(player.get_center()).color == WHITE:
-                play_surface.blit(player.image, player.get_pos().to_tuple())
+        for player, player_image in players:
+            play_surface.blit(player_image, player.get_pos().to_tuple())
 
     def show_text(self):
         text_surface: pgs = self.surfaces[SURFACE_TEXT]
