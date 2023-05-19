@@ -1,5 +1,4 @@
 import socket
-import pickle
 import helper
 from threading import Thread
 from game_state import GameState
@@ -33,6 +32,9 @@ class GameServer:
                 player.move_direction = move_direction
                 self.gs.advance_timeline(1)
                 print("Sending game state to player...")
+
+                # Usage
+                helper.output_obj_to_file(self.gs, 'game_state.txt')
                 helper.send_message(conn, self.gs)
                 print("Game state sent.")
             except Exception as e:

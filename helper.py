@@ -75,7 +75,8 @@ def recv_message(sock):
         return None
     message_length = struct.unpack('>I', raw_message_length)[0]
     # Read the message data
-    return pickle.loads(recv_all(sock, message_length))
+    data = recv_all(sock, message_length)
+    return pickle.loads(data)
 
 
 def recv_all(sock, length):
@@ -87,3 +88,27 @@ def recv_all(sock, length):
             return None
         data.extend(packet)
     return data
+
+
+def obj_dict(obj):
+    """ Recursively convert an object's attributes to a dictionary. """
+    if not hasattr(obj, "__dict__"):
+        return obj
+    result = {}
+    for key, val in obj.__dict__.items():
+        if key.startswith("__"):
+            continue
+        element = []
+        if isinstance(val, list):
+            for item in val:
+                element.append(obj_dict(item))
+        else:
+            element = obj_dict(val)
+        result[key] = element
+    return result
+
+
+def output_obj_to_file(obj, filename):
+    """ Output the object to a file. """
+    with open(filename, 'w') as file:
+        file.write(str(obj_dict(obj)))

@@ -32,7 +32,7 @@ class GameState:
             if isinstance(player, Minotaur):
                 self.minotaur = player
             else:
-                mino = Minotaur(player.get_pos(), player.size, helper.load_image(MINOTAUR_IMG))
+                mino = Minotaur(player.get_pos(), player.size, MINOTAUR_IMG)
                 self.minotaur = mino
         self.players.append(player)
         self._all_player_mem[player] = deque()

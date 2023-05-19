@@ -10,7 +10,7 @@ class Cell:
         self.index_in_row = row
         self.index_in_col = col
         self.width = width
-        self._neighbors: dict[Direction, 'Cell'] = {}
+        self._neighbors: dict[str, 'Cell'] = {}
         self.total_rows = total_rows
         self.color: Tuple[int, int, int] = WHITE
         self.is_up_to_date = False
@@ -21,15 +21,15 @@ class Cell:
     def is_neighbor(self, other) -> bool:
         return other in self._neighbors.values()
 
-    def get_neighbors(self) -> dict[Direction, 'Cell']:
+    def get_neighbors(self) -> dict[str, 'Cell']:
         return self._neighbors.copy()
 
-    def add_neighbor(self, other: 'Cell', dir_: Direction = None):
+    def add_neighbor(self, other: 'Cell', dir_: str = None):
         if dir_ is None:
             dir_ = get_direction(self.get_distance(other))
         if dir_ is not None:
-            self._neighbors[dir_] = other
-            other._neighbors[dir_.opposite()] = self
+            self._neighbors[dir_.name] = other
+            other._neighbors[dir_.opposite().name] = self
 
     def request_update(self):
         self.is_up_to_date = False
@@ -53,7 +53,7 @@ class Cell:
         x, y = self.index_in_row * width, self.index_in_col * width
         pygame.draw.rect(win, self.color, (x, y, width, width))
 
-        sides = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST}
+        sides = {'NORTH', 'SOUTH', 'EAST', 'WEST'}
         for direction in self._neighbors.keys():
             if direction in sides:
                 sides.remove(direction)
@@ -63,17 +63,17 @@ class Cell:
             wx2: int = x
             wy1: int = y
             wy2: int = y
-            if direction == Direction.SOUTH:  # DOWN
+            if direction == 'SOUTH':  # DOWN
                 wx2 += width - WALL_WIDTH
                 wy1 += width - WALL_WIDTH
                 wy2 += width - WALL_WIDTH
-            if direction == Direction.NORTH:  # UP
+            if direction == 'NORTH':  # UP
                 wx2 += width
-            if direction == Direction.EAST:  # RIGHT
+            if direction == 'EAST':  # RIGHT
                 wx1 += width - WALL_WIDTH
                 wx2 += width - WALL_WIDTH
                 wy2 += width - WALL_WIDTH
-            if direction == Direction.WEST:  # LEFT
+            if direction == 'WEST':  # LEFT
                 wy2 += width
             pygame.draw.line(win, RED, (wx1, wy1), (wx2, wy2), WALL_WIDTH)
 
