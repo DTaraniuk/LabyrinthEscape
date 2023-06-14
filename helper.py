@@ -6,6 +6,7 @@ import struct
 import pygame
 import pickle
 from typing import TYPE_CHECKING
+import constants
 
 if TYPE_CHECKING:
     from renderer import Renderer
@@ -22,7 +23,7 @@ def wait_for_input():
 
 def read_endpoints(maze: Maze) -> Tuple[Cell, Cell]:
     click_num = 0
-    width = WIDTH/ROWS
+    width = constants.WIDTH/constants.ROWS
     start: Cell = None
     end: Cell = None
     while click_num < 2:

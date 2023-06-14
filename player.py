@@ -8,7 +8,8 @@ from direction import Direction
 
 
 class Player:
-    def __init__(self, pos: CoordPair, size: Tuple[int, int], img: str = ''):
+    def __init__(self, pos: CoordPair, size: Tuple[int, int], img: str = '', name: str = ''):
+        self.name: str = name
         self._x: float = pos.x
         self._y: float = pos.y
         self.size = size

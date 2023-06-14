@@ -18,13 +18,19 @@ def index_string(n: int) -> str:
         return str(n) + "th"
 
 
+class GameStateChange:
+    def __init__(self, time: int):
+        self.time = time
+        self.player_positions: dict[str, CoordPair] = {}
+
+
 class GameState:
     def __init__(self, maze: Maze):
         self.players: list[Player] = []
         self.minotaur = None
         self.maze = maze
         self._all_player_mem: dict[Player, deque[tuple[int, list[Cell]]]] = {}
-        self.time = 0
+        self.time: int = 0
         self.escapes = 0
 
     def add_player(self, player: Player):  # if there is no minotaur, add as minotaur
@@ -37,12 +43,16 @@ class GameState:
         self.players.append(player)
         self._all_player_mem[player] = deque()
 
-    def advance_timeline(self, frames):
+    def advance_timeline(self, frames) -> GameStateChange:
+        change = GameStateChange(frames)
         self.time += frames
-        self.minotaur.chase_player(self.maze, self.players)
+        if self.minotaur:
+            self.minotaur.chase_player(self.maze, self.players)
         for player in self.players:
-            self._move_player(player, frames)
+            new_pos = self._move_player(player, frames)
+            change.player_positions[player.name] = new_pos
             self._update_player_vision(player)
+        return change
 
     def get_player_vision(self, player: Player) -> set[Cell]:
         player_mem = self._all_player_mem[player]
@@ -83,7 +93,7 @@ class GameState:
         player.is_alive = False
         self._all_player_mem[player].clear()
 
-    def _move_player(self, player: Player, frames: int):
+    def _move_player(self, player: Player, frames: int) -> CoordPair:
         x, y = player.get_center()
         dx, dy = player.move_direction
         target_x = min(self.maze.width - 1, x + dx * player.speed * frames)
@@ -113,6 +123,7 @@ class GameState:
                 target_y_cell.request_update()
 
         player.center(target_x, target_y)
+        return CoordPair(target_x, target_y)
 
     def reset(self):
         self.maze = Maze(ROWS, WIDTH)
@@ -128,3 +139,12 @@ class GameState:
                 continue
             player.is_alive = True
             player.set_pos(player_start)
+
+    def apply_change(self, change: GameStateChange):
+        self.time += change.time
+        for player in self.players:
+            new_pos = change.player_positions.get(player.name)
+            if new_pos:
+                player.center(new_pos.x, new_pos.y)
+            self._update_player_vision(player)
+

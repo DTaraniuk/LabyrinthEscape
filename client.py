@@ -2,64 +2,71 @@ import pygame
 import socket
 import helper
 from renderer import Renderer
+from game_state import GameState, GameStateChange
 import constants
-
+from threading import Thread
+from queue import Queue
 pygame.init()
-win = pygame.display.set_mode((constants.WIDTH, constants.WIDTH))  # Create window with 800x800 resolution
-
-SERVER = "127.0.0.1"  # The IP of the server
-PORT = 7777  # The port of the server
-ADDR = (SERVER, PORT)
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Connect to the server
-print("Connecting to the server...")
-client.connect(ADDR)
-print("Connected to the server.")
-
-# Receive player ID from the server
-print("Receiving player ID...")
-received_data = client.recv(4)
-player_id = int.from_bytes(received_data, byteorder='big')
-print(f"Received player ID: {player_id}")
 
 
-# Start the thread to handle data from the server
-# Thread(target=handle_server_data, args=(client,), daemon=True).start()
+class Client:
+    def __init__(self, ip, port=7777):
+        self.win = pygame.display.set_mode((constants.WIDTH, constants.WIDTH))  # Create window with 800x800 resolution
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect((ip, port))
+        self.queue = Queue()
+
+        self._receive_player_id()
+        self.gs = self._receive_initial_game_state()
+        self.renderer = Renderer(self.win, self.player_id)
+
+        self.move_thread = Thread(target=self.send_movement, daemon=True)
+        self.move_thread.start()
+
+    def _receive_player_id(self):
+        received_data = self.client.recv(4)
+        self.player_id = int.from_bytes(received_data, byteorder='big')
+
+    def _receive_initial_game_state(self):
+        gs = helper.recv_message(self.client)
+        if not isinstance(gs, GameState):
+            print("failed to get initial gs")
+            self.client.close()
+            exit(1)
+        return gs
+
+    def send_movement(self):
+        while True:
+            move_vector = self.queue.get()
+            helper.send_message(self.client, move_vector)
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    self.client.close()
+                    return
+
+            try:
+                player_move_vector = helper.input_movement()
+                self.queue.put(player_move_vector)
+
+                game_state_change: GameStateChange = helper.recv_message(self.client)
+                self.gs.apply_change(game_state_change)
+
+                clock.tick(constants.FPS)
+                self.renderer.render(self.gs)
+
+            except Exception as e:
+                print(f"Error: {e}")
+                break
+
+        self.client.close()
 
 
-clock = pygame.time.Clock()
-# Create the renderer with the player
-renderer = Renderer(win, player_id)
-# game loop
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            client.close()
-            break
-
-    try:
-        # Handle key press events for player movement
-        player_move_vector = helper.input_movement()
-
-        print("Sending player move vector to server...")
-        helper.send_message(client, player_move_vector)
-        print("Player move vector sent.")
-        print("Waiting for data from server...")
-        # Receive data from the server
-        game_state = helper.recv_message(client)
-        print("Received data from server.")
-        print("Data loaded successfully.")
-
-        # Pass the game_state to the renderer
-        clock.tick(constants.FPS)
-        renderer.render(game_state)
-        # win.fill(constants.LIGHT_BLUE)
-
-    except Exception as e:
-        print(f"Error: {e}")
-        break
-
-client.close()
+if __name__ == "__main__":
+    HAMACHI_IP = input("Enter the HAMACHI IP of the host (Dimas)")
+    client = Client(HAMACHI_IP)
+    client.run()

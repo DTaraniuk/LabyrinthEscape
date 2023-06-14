@@ -1,3 +1,4 @@
+import pygame
 import game_state
 import pathfinding
 from pygame import Surface as pgs
