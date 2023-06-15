@@ -6,6 +6,7 @@ from game_state import GameState, GameStateChange
 import constants
 from threading import Thread
 from queue import Queue
+from coordpair import CoordPair
 pygame.init()
 
 
@@ -36,9 +37,12 @@ class Client:
         return gs
 
     def send_movement(self):
+        prev_vec = CoordPair(0, 0)
         while True:
-            move_vector = self.queue.get()
-            helper.send_message(self.client, move_vector)
+            player_move_vector = helper.input_movement()
+            if player_move_vector != prev_vec:
+                helper.send_message(self.client, player_move_vector)
+                prev_vec = player_move_vector
 
     def run(self):
         clock = pygame.time.Clock()
@@ -50,14 +54,11 @@ class Client:
                     return
 
             try:
-                player_move_vector = helper.input_movement()
-                self.queue.put(player_move_vector)
-
                 game_state_change: GameStateChange = helper.recv_message(self.client)
                 self.gs.apply_change(game_state_change)
 
-                clock.tick(constants.FPS)
                 self.renderer.render(self.gs)
+                clock.tick(constants.FPS)
 
             except Exception as e:
                 print(f"Error: {e}")
