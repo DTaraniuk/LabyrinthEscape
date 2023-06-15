@@ -1,6 +1,6 @@
 import pygame
-import constants
-from player import Player
+from common import constants
+from game_logic import Player
 
 
 class ImageStorage:

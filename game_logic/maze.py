@@ -1,9 +1,9 @@
 import random
-from cell import Cell
+from .cell import Cell
 from typing import Callable, Optional
-from constants import *
-from direction import Direction
-from coordpair import CoordPair
+from common import constants
+from .direction import Direction
+from .coordpair import CoordPair
 
 
 def request_update(cells: list[Cell]):
@@ -81,7 +81,7 @@ class Maze:
         start_x, start_y = random.randrange(0, self.row_num), random.randrange(0, self.row_num)
         self.carve_path(start_x, start_y, cell_visit_data, 1)
 
-        self.remove_random_walls(RAND_WALL_COUNT)
+        self.remove_random_walls(constants.RAND_WALL_COUNT)
 
     def get_cells(self) -> list[Cell]:
         res = []

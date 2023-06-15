@@ -1,8 +1,8 @@
 import pygame
-from constants import*
+from common.constants import *
 from typing import Tuple
-from direction import *
-from coordpair import CoordPair
+from .direction import *
+from .coordpair import CoordPair
 
 
 class Cell:

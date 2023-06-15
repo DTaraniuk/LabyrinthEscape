@@ -1,10 +1,9 @@
-from typing import Tuple
-from constants import*
-from coordpair import CoordPair
+from common.constants import*
+from .coordpair import CoordPair
 
 
 class Player:
-    def __init__(self, pos: CoordPair, size: Tuple[int, int], name: str = '', alive_img=ALIVE_PLAYER_IMG, dead_img=DEAD_PLAYER_IMG):
+    def __init__(self, pos: CoordPair, size: tuple[int, int], name: str = '', alive_img=ALIVE_PLAYER_IMG, dead_img=DEAD_PLAYER_IMG):
         self.name: str = name
         self._x: float = pos.x
         self._y: float = pos.y

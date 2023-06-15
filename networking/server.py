@@ -1,18 +1,10 @@
+import pygame
 import socket
 import threading
-
-import pygame.time
-
-import constants
-import helper
-from threading import Thread
 import time
-from game_state import GameState
-from maze import Maze
-from player import Player
-from minotaur import Minotaur
-from coordpair import CoordPair
-from constants import *
+from common import *
+from game_logic import *
+from threading import Thread
 
 
 class GameServer:

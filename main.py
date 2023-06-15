@@ -1,16 +1,9 @@
 import pygame
-import game_state
-import pathfinding
 from pygame import Surface as pgs
-from game_state import GameState, index_string
-from maze import Maze
-from pathfinding import*
-from constants import*
-import helper
-from player import Player
-from minotaur import Minotaur
-from coordpair import CoordPair
-from renderer import Renderer
+from game_logic import *
+from common.constants import*
+from common import helper
+from graphics import Renderer
 
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, WIDTH))

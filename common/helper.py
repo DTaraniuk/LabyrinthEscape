@@ -1,15 +1,11 @@
-from pathfinding import*
 from typing import Callable
-from maze import Maze
-from coordpair import CoordPair
 import struct
 import pygame
 import pickle
 from typing import TYPE_CHECKING
-import constants
-
-if TYPE_CHECKING:
-    from renderer import Renderer
+from .constants import *
+from game_logic import Maze, CoordPair, Cell, PathfindingRes
+from graphics import Renderer
 
 
 def wait_for_input():
@@ -21,9 +17,9 @@ def wait_for_input():
                 return
 
 
-def read_endpoints(maze: Maze) -> Tuple[Cell, Cell]:
+def read_endpoints(maze: Maze) -> tuple[Cell, Cell]:
     click_num = 0
-    width = constants.WIDTH/constants.ROWS
+    width = WIDTH/ROWS
     start: Cell = None
     end: Cell = None
     while click_num < 2:
@@ -39,7 +35,8 @@ def read_endpoints(maze: Maze) -> Tuple[Cell, Cell]:
     return start, end
 
 
-def handle_pathfinding_call(renderer: 'Renderer', maze, algo: Callable[[Cell, Cell], PathfindingRes], path_color: tuple[int, int, int]):
+def handle_pathfinding_call(renderer: Renderer, maze, algo: Callable[[Cell, Cell], PathfindingRes],
+                            path_color: tuple[int, int, int]):
     start, end = read_endpoints(maze)
     pathfinding_res = algo(start, end)
     # for cell in pathfinding_res.affected_nodes:

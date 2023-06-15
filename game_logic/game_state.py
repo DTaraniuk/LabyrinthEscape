@@ -1,13 +1,11 @@
 import math
-import constants
-import helper
-from player import Player
-from minotaur import Minotaur
-from maze import Maze
-from cell import Cell
-from direction import *
+from common import constants
+from .player import Player
+from .minotaur import Minotaur
+from .maze import Maze
+from .cell import Cell
+from .direction import *
 from collections import deque
-from constants import *
 
 
 def index_string(n: int) -> str:
@@ -38,7 +36,7 @@ class GameState:
             if isinstance(player, Minotaur):
                 self.minotaur = player
             else:
-                mino = Minotaur(player.get_pos(), player.size, MINOTAUR_IMG)
+                mino = Minotaur(player.get_pos(), player.size, constants.MINOTAUR_IMG)
                 self.minotaur = mino
         self.players.append(player)
         self._all_player_mem[player] = deque()
@@ -80,7 +78,7 @@ class GameState:
 
             dist = player.get_center() - self.minotaur.get_center()
             abs_dist = math.sqrt(abs(dist.x)**2 + abs(dist.y)**2)
-            res[player] = abs_dist < KILL_DIST
+            res[player] = abs_dist < constants.KILL_DIST
             if res[player]:
                 self.kill_player(player)
 
@@ -126,10 +124,10 @@ class GameState:
         return CoordPair(target_x, target_y)
 
     def reset(self):
-        self.maze = Maze(ROWS, WIDTH)
+        self.maze = Maze(constants.ROWS, constants.WIDTH)
         self.maze.generate_labyrinth()
 
-        center = (ROWS // 2 + 0.5) * self.maze.cell_width
+        center = (constants.ROWS // 2 + 0.5) * self.maze.cell_width
         player_start = CoordPair(center, center)
         mino_start = self.maze.get_random_edge_cell().get_pos()
         self.minotaur.set_pos(mino_start)

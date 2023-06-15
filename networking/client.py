@@ -1,14 +1,11 @@
 import pygame
 import socket
-import helper
+from common import helper, constants
 import time
-from renderer import Renderer
-from game_state import GameState, GameStateChange
-import constants
+from graphics import Renderer
+from game_logic import GameState, GameStateChange, CoordPair
 from threading import Thread
 from queue import Queue
-from coordpair import CoordPair
-pygame.init()
 
 
 class Client:
@@ -81,6 +78,7 @@ class Client:
         self.client.close()
 
 
+pygame.init()
 if __name__ == "__main__":
     HAMACHI_IP = input("Enter the HAMACHI IP of the host (Dimas)")
     client = Client(HAMACHI_IP)

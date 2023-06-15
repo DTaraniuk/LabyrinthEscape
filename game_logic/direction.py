@@ -1,7 +1,7 @@
 from enum import Enum
-from coordpair import CoordPair
+from .coordpair import CoordPair
 from typing import Optional
-from constants import EPS
+from common.constants import EPS
 
 
 class Direction(Enum):

@@ -1,11 +1,9 @@
 import random
-
-from player import Player
-from maze import Maze
-from pathfinding import astar, PathfindingRes
-from direction import *
-from constants import *
-import pygame
+from .player import Player
+from .direction import *
+from .pathfinding import PathfindingRes, astar
+from .maze import Maze
+from common.constants import *
 
 
 class Minotaur(Player):

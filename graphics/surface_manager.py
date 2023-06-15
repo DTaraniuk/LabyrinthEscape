@@ -1,12 +1,10 @@
 import math
 import pygame
-import helper
-from constants import*
+
+from common.constants import *
 from pygame import Surface as pgs
 from typing import Tuple
-from cell import Cell
-from maze import Maze
-from player import Player
+from game_logic import Cell, Maze, Player
 
 
 class SurfaceManager:

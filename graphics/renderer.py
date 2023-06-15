@@ -1,10 +1,10 @@
 import pygame
 
-import image_storage
-from surface_manager import SurfaceManager
+from .image_storage import ImageStorage
+from .surface_manager import SurfaceManager
 from pygame import Rect
-from game_state import GameState
-from constants import *
+from game_logic import GameState
+from common import constants, helper
 
 
 class Renderer:
@@ -13,7 +13,7 @@ class Renderer:
         surface_manager.init_surfaces()
         self._player_id: int = player_id
         self._surface_manager: SurfaceManager = surface_manager
-        self._image_storage = image_storage.ImageStorage()
+        self._image_storage = ImageStorage()
 
     def update_surfaces(self, gs: GameState):
         self._surface_manager.update_maze_surface(gs.maze)
@@ -35,9 +35,8 @@ class Renderer:
         font_ = pygame.font.Font(None, font_size)
         self._surface_manager.update_text_surface(text, font_)
         self._surface_manager.show_text()
-        from helper import wait_for_input
-        wait_for_input()
-        self._surface_manager.clear_surface(SURFACE_TEXT)
+        helper.wait_for_input()
+        self._surface_manager.clear_surface(constants.SURFACE_TEXT)
         self._surface_manager.render()
 
     def toggle_grid(self):
@@ -46,7 +45,7 @@ class Renderer:
     def refresh(self, gs: GameState):
         gs.maze.request_full_update()
         self._surface_manager.update_maze_surface(gs.maze)
-        self._surface_manager.clear_surface(SURFACE_PATH)
+        self._surface_manager.clear_surface(constants.SURFACE_PATH)
 
     def render_path(self, pathfinding_res, path_color):
         self._surface_manager.update_path_surface(pathfinding_res.path, path_color)

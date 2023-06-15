@@ -1,5 +1,5 @@
 from typing import List, Dict, Tuple, Optional
-from cell import Cell
+from .cell import Cell
 import heapq
 
 
