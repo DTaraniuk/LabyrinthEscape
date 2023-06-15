@@ -24,5 +24,8 @@ class CoordPair:
     def __iter__(self):
         return iter((self.x, self.y))
 
+    def __eq__(self, other):
+        return self.equals(other)
+
     def equals(self, other: 'CoordPair') -> bool:
         return (self.x, self.y) == (other.x, other.y)

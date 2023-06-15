@@ -1,6 +1,7 @@
 import pygame
 import socket
 import helper
+import time
 from renderer import Renderer
 from game_state import GameState, GameStateChange
 import constants
@@ -22,7 +23,6 @@ class Client:
         self.renderer = Renderer(self.win, self.player_id)
 
         self.move_thread = Thread(target=self.send_movement, daemon=True)
-        self.move_thread.start()
 
     def _receive_player_id(self):
         received_data = self.client.recv(4)
@@ -37,12 +37,14 @@ class Client:
         return gs
 
     def send_movement(self):
-        prev_vec = CoordPair(0, 0)
+        prev_vec = CoordPair()
         while True:
             player_move_vector = helper.input_movement()
-            if player_move_vector != prev_vec:
+            if not player_move_vector.equals(prev_vec):
                 helper.send_message(self.client, player_move_vector)
                 prev_vec = player_move_vector
+
+            time.sleep(1.0 / constants.FPS)
 
     def run(self):
         # Wait for "start" message from server
@@ -52,6 +54,7 @@ class Client:
             self.client.close()
             return
 
+        self.move_thread.start()
         # receive initial game state from server
         self.gs = helper.recv_message(self.client)
 
