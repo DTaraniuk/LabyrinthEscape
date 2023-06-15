@@ -1,6 +1,8 @@
 import socket
 import threading
 
+import pygame.time
+
 import constants
 import helper
 from threading import Thread
@@ -15,11 +17,13 @@ from constants import *
 
 class GameServer:
     def __init__(self, host='localhost', port=7777):
-        self.player_input_threads: dict[Player, threading.Thread] = {}
+        self.player_input_threads: dict[str, threading.Thread] = {}
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((host, port))
         self.server.listen(2)
-        self.clients: dict[Player, socket.socket] = {}
+        self.players: dict[str, Player] = {}
+        self.clients: dict[str, socket.socket] = {}
+        self.player_keys: list[str] = []
 
         self.maze = Maze(ROWS, WIDTH)
         self.maze.generate_labyrinth()
@@ -36,59 +40,69 @@ class GameServer:
                 self.running = True
                 break
 
-    def input_movement(self, conn, player):
+    def input_movement(self, name: str):
         while self.running:
             try:
-                # print("Waiting for move direction from player...")
-                move_direction = helper.recv_message(conn)
-                # print("Received move direction.")
-                # print("Move direction loaded successfully.")
-                player.move_direction = move_direction
+                conn = self.clients[name]
+                player = self.players[name]
+                if conn and player:
+                    move_direction = helper.recv_message(conn)
+                    player.move_direction = move_direction
+                else:
+                    print(f"WARN: Failed to input movement for player {name} on time {self.gs.time}.")
             except Exception as e:
-                print(f"Error {e} occurred during movement input.")
+                print(f"ERR: Error {e} occurred during movement input for player {name}. Removing")
+                self.player_keys.remove(name)
+                return
 
     def advance_and_broadcast(self):
+        clock = pygame.time.Clock()
         advance_cnt = 0
         while self.running:
-            time.sleep(1.0 / FPS)
             change = self.gs.advance_timeline(1)
             advance_cnt += 1
 
             if advance_cnt % 1000 == 0:
-                print(f"Advanced game state timeline {advance_cnt} times.")
+                print(f"INFO: Advanced game state timeline {advance_cnt} times.")
 
-            for conn in self.clients.values():
+            for name in self.player_keys:
                 try:
-                    # print("Sending game state change to player...")
-                    helper.send_message(conn, change)
-                    # print("Game state change sent.")
+                    conn = self.clients[name]
+                    if conn:
+                        helper.send_message(conn, change)
                 except Exception as e:
-                    print(f"Error {e} occurred during broadcast.")
+                    print(f"ERR: Error {e} occurred during broadcast to player {name}. Removing")
+                    self.player_keys.remove(name)
+
+            clock.tick(constants.FPS)
 
     def listen_for_connections(self):
         while True:
             conn, addr = self.server.accept()
             if not self.connecting:
                 break
-            if len(self.clients) == 0:  # minotaur
+
+            player_id = len(self.player_keys)
+            if player_id == 0:  # minotaur
                 mino_start = self.maze.get_random_edge_cell().get_pos()
-                player = Minotaur(mino_start, (self.maze.cell_width, self.maze.cell_width), MINOTAUR_IMG, is_player_controlled=True)
+                player = Minotaur(mino_start, (self.maze.cell_width, self.maze.cell_width), is_player_controlled=True)
             else:
                 center = (ROWS // 2 + 0.5) * self.maze.cell_width
                 player_start = CoordPair(center, center)
-                player = Player(player_start, (self.maze.cell_width / 2, self.maze.cell_width / 2), PLAYER_IMG)
+                player = Player(player_start, (self.maze.cell_width / 2, self.maze.cell_width / 2), name=f"Player{player_id}")
             self.gs.add_player(player)
 
-            player_id = len(self.clients)
             print("Sending player ID to client...")
             conn.send(player_id.to_bytes(4, byteorder='big'))
             print("Player ID sent.")
             helper.send_message(conn, self.gs)
-            self.clients[player] = conn
+            self.player_keys.append(player.name)
+            self.players[player.name] = player
+            self.clients[player.name] = conn
             print(f"Player connected: {addr}")
 
-            thread = Thread(target=self.input_movement, args=(conn, player), daemon=True)
-            self.player_input_threads[player] = thread
+            thread = Thread(target=self.input_movement, args=(player.name,), daemon=True)
+            self.player_input_threads[player.name] = thread
             print("Started thread to handle client.")
 
     def start(self):
@@ -103,14 +117,16 @@ class GameServer:
         while self.connecting:  # This will just keep the main thread from progressing until 'start' command is given
             time.sleep(0.1)
 
-        print(f"Starting the game with {len(self.clients)} players")
+        print(f"Starting the game with {len(self.player_keys)} players")
         # Send "start" message to all clients
-        for conn in self.clients.values():
-            helper.send_message(conn, constants.START)
+        for name in self.player_keys:
+            conn = self.clients[name]
+            if conn:
+                helper.send_message(conn, constants.START)
 
         # Start reading player input and send them initial game state
-        for player, thread in self.player_input_threads.items():
-            helper.send_message(self.clients[player], self.gs)
+        for name, thread in self.player_input_threads.items():
+            helper.send_message(self.clients[name], self.gs)
             thread.start()
 
         # Start a separate thread that advances the game state and broadcasts it to all clients

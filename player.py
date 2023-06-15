@@ -1,14 +1,10 @@
-import math
 from typing import Tuple
-import pygame
 from constants import*
-from maze import Maze
 from coordpair import CoordPair
-from direction import Direction
 
 
 class Player:
-    def __init__(self, pos: CoordPair, size: Tuple[int, int], img: str = '', name: str = ''):
+    def __init__(self, pos: CoordPair, size: Tuple[int, int], name: str = '', alive_img=ALIVE_PLAYER_IMG, dead_img=DEAD_PLAYER_IMG):
         self.name: str = name
         self._x: float = pos.x
         self._y: float = pos.y
@@ -16,13 +12,13 @@ class Player:
         self.speed = PLAYER_SPEED
         self.is_alive = True
         self.move_direction: CoordPair = CoordPair()
-        # if img != '':
-            # player_surface = img.convert_alpha()
-            # resized_player_surface = pygame.transform.scale(player_surface, self.size)
-        self.image = img
-        # else:
-            # self.image = pygame.Surface(size, pygame.SRCALPHA)
-            # self.image.fill(PINK)
+        self.images: dict[str, str] = {ALIVE: alive_img, DEAD: dead_img}
+
+    def get_image(self):
+        if self.is_alive:
+            return self.images[ALIVE]
+        else:
+            return self.images[DEAD]
 
     def set_pos(self, coords: CoordPair):
         self._x, self._y = coords

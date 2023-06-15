@@ -25,11 +25,11 @@ def main(win: pgs) -> None:
 
     center = (ROWS // 2 + 0.5) * maze.cell_width
     player_start = CoordPair(center, center)
-    player = Player(player_start, (maze.cell_width/2, maze.cell_width/2), PLAYER_IMG)
+    player = Player(player_start, (maze.cell_width/2, maze.cell_width/2), "Main-Kun")
 
     mino_start = maze.get_random_edge_cell().get_pos()
 
-    minotaur = Minotaur(mino_start, (maze.cell_width, maze.cell_width), MINOTAUR_IMG)
+    minotaur = Minotaur(mino_start, (maze.cell_width, maze.cell_width))
 
     clock = pygame.time.Clock()
 

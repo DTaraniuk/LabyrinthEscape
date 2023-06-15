@@ -16,8 +16,9 @@ class ImageStorage:
         return self.images[image_name]
 
     def get_or_add(self, player: Player) -> pygame.Surface:
-        if player.image != '':
-            result_image = self._load_image(player.image, player.size)
+        image_name = player.get_image()
+        if image_name:
+            result_image = self._load_image(image_name, player.size)
         else:
             result_image = pygame.Surface(player.size, pygame.SRCALPHA)
             result_image.fill(constants.LIGHT_BLUE)

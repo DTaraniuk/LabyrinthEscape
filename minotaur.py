@@ -9,8 +9,8 @@ import pygame
 
 
 class Minotaur(Player):
-    def __init__(self, pos: CoordPair, size: tuple[int, int], img: pygame.Surface = None, is_player_controlled=False):
-        super().__init__(pos, size, img)
+    def __init__(self, pos: CoordPair, size: tuple[int, int], is_player_controlled=False, name="Minotaur"):
+        super().__init__(pos, size, name=name, alive_img=MINOTAUR_IMG)
         self.speed = MINOTAUR_SPEED
         self.chased_player = None
         self.is_player_controlled = is_player_controlled
