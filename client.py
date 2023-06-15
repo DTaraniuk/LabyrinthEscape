@@ -45,7 +45,18 @@ class Client:
                 prev_vec = player_move_vector
 
     def run(self):
+        # Wait for "start" message from server
+        start_message = helper.recv_message(self.client)
+        if start_message != constants.START:
+            print("Did not receive 'start' message from server.")
+            self.client.close()
+            return
+
+        # receive initial game state from server
+        self.gs = helper.recv_message(self.client)
+
         clock = pygame.time.Clock()
+
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

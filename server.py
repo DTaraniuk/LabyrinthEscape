@@ -1,6 +1,7 @@
 import socket
 import threading
 
+import constants
 import helper
 from threading import Thread
 import time
@@ -14,6 +15,7 @@ from constants import *
 
 class GameServer:
     def __init__(self, host='localhost', port=7777):
+        self.player_input_threads: dict[Player, threading.Thread] = {}
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((host, port))
         self.server.listen(2)
@@ -43,7 +45,7 @@ class GameServer:
                 # print("Move direction loaded successfully.")
                 player.move_direction = move_direction
             except Exception as e:
-                print(f"Error {e} occurred.")
+                print(f"Error {e} occurred during movement input.")
 
     def advance_and_broadcast(self):
         advance_cnt = 0
@@ -61,17 +63,13 @@ class GameServer:
                     helper.send_message(conn, change)
                     # print("Game state change sent.")
                 except Exception as e:
-                    print(f"Error {e} occurred.")
+                    print(f"Error {e} occurred during broadcast.")
 
-    def start(self):
-        print("Server started, waiting for connections...")
-        player_input_threads: dict[Player, threading.Thread] = {}
-
-        # Listen to console
-        Thread(target=self.listen_for_start_command, daemon=True).start()
-
-        while self.connecting:
+    def listen_for_connections(self):
+        while True:
             conn, addr = self.server.accept()
+            if not self.connecting:
+                break
             if len(self.clients) == 0:  # minotaur
                 mino_start = self.maze.get_random_edge_cell().get_pos()
                 player = Minotaur(mino_start, (self.maze.cell_width, self.maze.cell_width), MINOTAUR_IMG, is_player_controlled=True)
@@ -90,12 +88,28 @@ class GameServer:
             print(f"Player connected: {addr}")
 
             thread = Thread(target=self.input_movement, args=(conn, player), daemon=True)
-            player_input_threads[player] = thread
+            self.player_input_threads[player] = thread
             print("Started thread to handle client.")
 
+    def start(self):
+        print("Server started, waiting for connections...")
+
+        # Listen for game start (console)
+        Thread(target=self.listen_for_start_command, daemon=True).start()
+
+        # Listen for connections (hamachi VPN)
+        Thread(target=self.listen_for_connections, daemon=True).start()
+
+        while self.connecting:  # This will just keep the main thread from progressing until 'start' command is given
+            time.sleep(0.1)
+
         print(f"Starting the game with {len(self.clients)} players")
+        # Send "start" message to all clients
+        for conn in self.clients.values():
+            helper.send_message(conn, constants.START)
+
         # Start reading player input and send them initial game state
-        for player, thread in player_input_threads.items():
+        for player, thread in self.player_input_threads.items():
             helper.send_message(self.clients[player], self.gs)
             thread.start()
 

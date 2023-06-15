@@ -16,7 +16,7 @@ EPS = 1e-10
 ROWS = 10
 RAND_WALL_COUNT = ROWS//2
 FONT_SIZE = 30
-WIDTH = 1200
+WIDTH = 800
 WALL_WIDTH = 2
 GRID_WIDTH = 1
 GRID = False
@@ -41,3 +41,6 @@ SURFACE_TEXT = "text"
 SURFACE_PLAY = "play"
 # endregion
 
+# region network signals
+START = 'start'
+# endregion
