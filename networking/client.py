@@ -1,7 +1,10 @@
 import pygame
 import socket
-from common import helper, constants
 import time
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from common import helper, constants
 from graphics import Renderer
 from game_logic import GameState, GameStateChange, CoordPair
 from threading import Thread
