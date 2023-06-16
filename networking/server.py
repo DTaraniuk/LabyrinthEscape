@@ -2,8 +2,8 @@ import pygame
 import socket
 import threading
 import time
-from common import *
-from game_logic import *
+from common import constants, helper
+from game_logic import Player, GameState, Maze, Minotaur, CoordPair
 from threading import Thread
 
 
@@ -17,7 +17,7 @@ class GameServer:
         self.clients: dict[str, socket.socket] = {}
         self.player_keys: list[str] = []
 
-        self.maze = Maze(ROWS, WIDTH)
+        self.maze = Maze(constants.ROWS, constants.WIDTH)
         self.maze.generate_labyrinth()
         self.gs = GameState(self.maze)
 
@@ -79,9 +79,10 @@ class GameServer:
                 mino_start = self.maze.get_random_edge_cell().get_pos()
                 player = Minotaur(mino_start, (self.maze.cell_width, self.maze.cell_width), is_player_controlled=True)
             else:
-                center = (ROWS // 2 + 0.5) * self.maze.cell_width
+                center = (constants.ROWS // 2 + 0.5) * self.maze.cell_width
                 player_start = CoordPair(center, center)
-                player = Player(player_start, (self.maze.cell_width / 2, self.maze.cell_width / 2), name=f"Player{player_id}")
+                player = Player(player_start, (self.maze.cell_width / 2, self.maze.cell_width / 2),
+                                name=f"Player{player_id}")
             self.gs.add_player(player)
 
             print("Sending player ID to client...")
