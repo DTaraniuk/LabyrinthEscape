@@ -47,6 +47,7 @@ class Client:
 
     # region run
     def update_game_state(self):
+        clock = pygame.time.Clock()
         while True:
             try:
                 game_state_change: GameStateChange = helper.recv_message(self.client)
@@ -56,7 +57,11 @@ class Client:
             except Exception as e:
                 print(f"Error: {e}")
                 break
-            time.sleep(1.0 / constants.FPS)
+
+            now = datetime.now().time()
+
+            print(f"Current time: {now}, game time: {self.server_gs.time}")
+            clock.tick(1.0 / constants.FPS)
 
     def send_movement(self):
         prev_vec = CoordPair()
@@ -98,9 +103,7 @@ class Client:
                 with self.game_state_lock:
                     # self.own_gs.advance_timeline(1)
                     # self.renderer.render(self.own_gs)
-                    now = datetime.now().time()
 
-                    print(f"Current time: {now}, game time: {self.server_gs.time}")
                     self.renderer.render(self.server_gs)
                 clock.tick(constants.FPS)
 
