@@ -53,6 +53,10 @@ class GameState:
         return change
 
     def get_player_vision(self, player: Player) -> set[Cell]:
+        # minotaur has allvision
+        if isinstance(player, Minotaur):
+            return set(self.maze.get_cells())
+
         player_mem = self._all_player_mem[player]
         res: set[Cell] = set()
         for mem_entry in player_mem:
@@ -60,6 +64,8 @@ class GameState:
         return res
 
     def _update_player_vision(self, player: Player):
+        if isinstance(player, Minotaur):
+            return
         player_cell = self.maze.get_cell(player.get_center())
         current_vision = player_cell.get_visible_cells()
         if not self._all_player_mem[player] or self._all_player_mem[player][-1][1] != current_vision:
