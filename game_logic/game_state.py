@@ -30,7 +30,6 @@ class GameState:
         self.maze = maze
         self._all_player_mem: dict[Player, deque[tuple[int, list[Cell]]]] = {}
         self.time: int = 0
-        self.escapes = 0
 
     def add_player(self, player: Player):  # if there is no minotaur, add as minotaur
         if self.minotaur is None:
@@ -48,9 +47,11 @@ class GameState:
         if self.minotaur:
             self.minotaur.chase_player(self.maze, self.players)
         for player in self.players:
+            change.player_lives[player.name] = player.is_alive
+            if not player.is_alive:
+                continue
             new_pos = self._move_player(player, frames)
             change.player_positions[player.name] = new_pos
-            change.player_lives[player.name] = player.is_alive
             self._update_player_vision(player)
         self.check_win_lose()
         return change
@@ -81,7 +82,7 @@ class GameState:
     def check_win_lose(self) -> Optional[dict[Player, bool]]:
         res = {}
         for player in self.players:
-            if player == self.minotaur:
+            if player == self.minotaur or player.escaped:
                 continue
             player_cell = self.maze.get_cell(player.get_center())
 
@@ -92,7 +93,7 @@ class GameState:
                 self.kill_player(player)
 
             if player_cell == self.maze.victory_cell:
-                self.escapes += 1
+                player.escaped = True
                 return None
         return res
 
@@ -150,9 +151,11 @@ class GameState:
     def apply_change(self, change: GameStateChange):
         self.time += change.time
         for player in self.players:
-            player.is_alive = change.player_lives[player.name]
-            new_pos = change.player_positions.get(player.name)
-            if new_pos:
+            # Ensure the player's name exists in the dictionary before attempting to access it
+            if player.name in change.player_lives:
+                player.is_alive = change.player_lives[player.name]
+            if player.name in change.player_positions:
+                new_pos = change.player_positions[player.name]
                 player.center(new_pos.x, new_pos.y)
             self._update_player_vision(player)
 

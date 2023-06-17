@@ -3,19 +3,25 @@ from .coordpair import CoordPair
 
 
 class Player:
-    def __init__(self, pos: CoordPair, size: tuple[int, int], name: str = '', alive_img=ALIVE_PLAYER_IMG, dead_img=DEAD_PLAYER_IMG):
+    def __init__(self, pos: CoordPair, size: tuple[int, int], name: str = '',
+                 alive_img=ALIVE_PLAYER_IMG, dead_img=DEAD_PLAYER_IMG, escaped_img=ESCAPED_PLAYER_IMG):
         self.name: str = name
         self._x: float = pos.x
         self._y: float = pos.y
         self.size = size
         self.speed = PLAYER_SPEED
         self.is_alive = True
+        self.escaped = False
         self.move_direction: CoordPair = CoordPair()
-        self.images: dict[str, str] = {ALIVE: alive_img, DEAD: dead_img}
+        self.images: dict[str, str] = {ALIVE: alive_img,
+                                       DEAD: dead_img,
+                                       ESCAPED: escaped_img}
 
     def get_image(self):
         if self.is_alive:
             return self.images[ALIVE]
+        elif self.escaped:
+            return self.images[ESCAPED]
         else:
             return self.images[DEAD]
 

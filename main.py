@@ -1,6 +1,6 @@
 import pygame
 from pygame import Surface as pgs
-from game_logic import *
+from game_logic import Maze, CoordPair, Player, Minotaur, GameState, pathfinding
 from common.constants import*
 from common import helper
 from graphics import Renderer
@@ -61,7 +61,7 @@ def main(win: pgs) -> None:
 
         victory = gs.check_win_lose()
         if victory is None:
-            player_renderer.user_message(f"You have escaped for the {game_state.index_string(gs.escapes)} time", FONT_SIZE)
+            player_renderer.user_message(f"You have escaped", FONT_SIZE)
             maze.randomize_victory_cell()
             player_renderer.refresh(gs)
         else:
