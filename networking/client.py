@@ -61,7 +61,7 @@ class Client:
             now = datetime.now().time()
 
             print(f"Current time: {now}, game time: {self.server_gs.time}")
-            clock.tick(1.0 / constants.FPS)
+            clock.tick(constants.FPS)
 
     def send_movement(self):
         prev_vec = CoordPair()
