@@ -23,7 +23,7 @@ class Client:
 
         self._receive_player_id()
         self.server_gs: GameState = None
-        self.own_gs: GameState = None
+        # self.own_gs: GameState = None
         self.renderer = Renderer(self.win, self.player_id)
 
         self.move_thread: threading.Thread = Thread(target=self.send_movement, daemon=True)
@@ -51,7 +51,7 @@ class Client:
                 game_state_change: GameStateChange = helper.recv_message(self.client)
                 with self.game_state_lock:
                     self.server_gs.apply_change(game_state_change)
-                    self.own_gs.populate(self.server_gs)
+                    # self.own_gs.populate(self.server_gs)
             except Exception as e:
                 print(f"Error: {e}")
                 break
@@ -78,7 +78,7 @@ class Client:
 
         # receive initial game state from server
         self._receive_initial_game_state()
-        self.own_gs = copy.deepcopy(self.server_gs)
+        # self.own_gs = copy.deepcopy(self.server_gs)
 
         self.update_thread = Thread(target=self.update_game_state, daemon=True)
         self.move_thread.start()
@@ -95,8 +95,9 @@ class Client:
 
             try:
                 with self.game_state_lock:
-                    self.own_gs.advance_timeline(1)
-                    self.renderer.render(self.own_gs)
+                    # self.own_gs.advance_timeline(1)
+                    # self.renderer.render(self.own_gs)
+                    self.renderer.render(self.server_gs)
                 clock.tick(constants.FPS)
 
             except Exception as e:
