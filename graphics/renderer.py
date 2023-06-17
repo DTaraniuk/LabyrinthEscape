@@ -3,7 +3,7 @@ import pygame
 from .image_storage import ImageStorage
 from .surface_manager import SurfaceManager
 from pygame import Rect
-from game_logic import GameState
+from game_logic import GameState, Cell
 from common import constants, helper
 
 

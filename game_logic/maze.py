@@ -125,4 +125,4 @@ class Maze:
         #     self._victory_cell.color = WHITE
 
         self.victory_cell = self.get_random_edge_cell()
-        # self.victory_cell.color = PINK
+        self.victory_cell.color = constants.PINK

@@ -5,6 +5,7 @@ from common.constants import *
 from pygame import Surface as pgs
 from typing import Tuple
 from game_logic import Cell, Maze, Player
+from .drawer import draw_cell
 
 
 class SurfaceManager:
@@ -71,7 +72,7 @@ class SurfaceManager:
     def update_maze_surface(self, maze: Maze) -> None:
         maze_surface: pygame.Surface = self.surfaces[SURFACE_MAZE]
         for cell in maze.get_cells():
-            cell.draw(maze_surface)
+            draw_cell(cell, maze_surface)
 
     def toggle_grid_surface(self):
         grid_surface: pygame.Surface = self.surfaces[SURFACE_GRID]

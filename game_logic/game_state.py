@@ -21,6 +21,7 @@ class GameStateChange:
         self.time = time
         self.player_positions: dict[str, CoordPair] = {}
         self.player_lives: dict[str, bool] = {}
+        self.player_escapes: dict[str, bool] = {}
 
 
 class GameState:
@@ -50,6 +51,7 @@ class GameState:
             change.player_lives[player.name] = player.is_alive
             if not player.is_alive:
                 continue
+            change.player_escapes[player.name] = player.escaped
             new_pos = self._move_player(player, frames)
             change.player_positions[player.name] = new_pos
             self._update_player_vision(player)
@@ -154,6 +156,8 @@ class GameState:
             # Ensure the player's name exists in the dictionary before attempting to access it
             if player.name in change.player_lives:
                 player.is_alive = change.player_lives[player.name]
+            if player.name in change.player_escapes:
+                player.escaped = change.player_escapes[player.name]
             if player.name in change.player_positions:
                 new_pos = change.player_positions[player.name]
                 player.center(new_pos.x, new_pos.y)

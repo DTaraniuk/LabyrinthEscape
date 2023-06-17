@@ -5,7 +5,6 @@ import pickle
 from typing import TYPE_CHECKING
 from .constants import *
 from game_logic import Maze, CoordPair, Cell, PathfindingRes
-from graphics import Renderer
 
 
 def wait_for_input():
@@ -35,7 +34,7 @@ def read_endpoints(maze: Maze) -> tuple[Cell, Cell]:
     return start, end
 
 
-def handle_pathfinding_call(renderer: Renderer, maze, algo: Callable[[Cell, Cell], PathfindingRes],
+def handle_pathfinding_call(renderer, maze, algo: Callable[[Cell, Cell], PathfindingRes],
                             path_color: tuple[int, int, int]):
     start, end = read_endpoints(maze)
     pathfinding_res = algo(start, end)

@@ -18,10 +18,10 @@ class Player:
                                        ESCAPED: escaped_img}
 
     def get_image(self):
-        if self.is_alive:
-            return self.images[ALIVE]
-        elif self.escaped:
+        if self.escaped:
             return self.images[ESCAPED]
+        elif self.is_alive:
+            return self.images[ALIVE]
         else:
             return self.images[DEAD]
 
