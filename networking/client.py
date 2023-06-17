@@ -12,6 +12,7 @@ from common import helper, constants
 from graphics import Renderer
 from game_logic import GameState, GameStateChange, CoordPair
 from threading import Thread
+from datetime import datetime
 
 
 class Client:
@@ -97,6 +98,9 @@ class Client:
                 with self.game_state_lock:
                     # self.own_gs.advance_timeline(1)
                     # self.renderer.render(self.own_gs)
+                    now = datetime.now().time()
+
+                    print(f"Current time: {now}, game time: {self.server_gs.time}")
                     self.renderer.render(self.server_gs)
                 clock.tick(constants.FPS)
 
