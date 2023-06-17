@@ -55,6 +55,7 @@ class Client:
             except Exception as e:
                 print(f"Error: {e}")
                 break
+            time.sleep(1.0 / constants.FPS)
 
     def send_movement(self):
         prev_vec = CoordPair()

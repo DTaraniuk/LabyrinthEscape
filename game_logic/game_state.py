@@ -50,6 +50,7 @@ class GameState:
             new_pos = self._move_player(player, frames)
             change.player_positions[player.name] = new_pos
             self._update_player_vision(player)
+        self.check_win_lose()
         return change
 
     def get_player_vision(self, player: Player) -> set[Cell]:
