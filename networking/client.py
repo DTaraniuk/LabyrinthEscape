@@ -117,5 +117,12 @@ class Client:
 pygame.init()
 if __name__ == "__main__":
     HAMACHI_IP = input("Enter the HAMACHI IP of the host (Dimas)")
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((HAMACHI_IP, 7777))
+    while True:
+        msg = helper.recv_message(client)
+        print(f"Received message from server: {msg}. Sending back:")
+        reply = input("Enter the reply")
+        helper.send_message(client, reply)
     client = Client(HAMACHI_IP)
     client.run()
