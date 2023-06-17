@@ -3,12 +3,15 @@ import socket
 import time
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import copy
+import threading
+proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(proj_dir)
+os.chdir(proj_dir)
 from common import helper, constants
 from graphics import Renderer
 from game_logic import GameState, GameStateChange, CoordPair
 from threading import Thread
-from queue import Queue
 
 
 class Client:
@@ -16,14 +19,17 @@ class Client:
         self.win = pygame.display.set_mode((constants.WIDTH, constants.WIDTH))  # Create window with 800x800 resolution
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((ip, port))
-        self.queue = Queue()
+        self.game_state_lock = threading.Lock()
 
         self._receive_player_id()
-        self.gs = self._receive_initial_game_state()
+        self.server_gs: GameState = None
+        self.own_gs: GameState = None
         self.renderer = Renderer(self.win, self.player_id)
 
-        self.move_thread = Thread(target=self.send_movement, daemon=True)
+        self.move_thread: threading.Thread = Thread(target=self.send_movement, daemon=True)
+        self.update_thread: threading.Thread = None
 
+    # region init
     def _receive_player_id(self):
         received_data = self.client.recv(4)
         self.player_id = int.from_bytes(received_data, byteorder='big')
@@ -34,7 +40,21 @@ class Client:
             print("failed to get initial gs")
             self.client.close()
             exit(1)
-        return gs
+        self.server_gs = gs
+
+    # endregion
+
+    # region run
+    def update_game_state(self):
+        while True:
+            try:
+                game_state_change: GameStateChange = helper.recv_message(self.client)
+                with self.game_state_lock:
+                    self.server_gs.apply_change(game_state_change)
+                    self.own_gs.populate(self.server_gs)
+            except Exception as e:
+                print(f"Error: {e}")
+                break
 
     def send_movement(self):
         prev_vec = CoordPair()
@@ -46,6 +66,7 @@ class Client:
 
             time.sleep(1.0 / constants.FPS)
 
+    # endregion
     def run(self):
         # Wait for "start" message from server
         start_message = helper.recv_message(self.client)
@@ -54,9 +75,13 @@ class Client:
             self.client.close()
             return
 
-        self.move_thread.start()
         # receive initial game state from server
-        self.gs = helper.recv_message(self.client)
+        self._receive_initial_game_state()
+        self.own_gs = copy.deepcopy(self.server_gs)
+
+        self.update_thread = Thread(target=self.update_game_state, daemon=True)
+        self.move_thread.start()
+        self.update_thread.start()
 
         clock = pygame.time.Clock()
 
@@ -68,10 +93,9 @@ class Client:
                     return
 
             try:
-                game_state_change: GameStateChange = helper.recv_message(self.client)
-                self.gs.apply_change(game_state_change)
-
-                self.renderer.render(self.gs)
+                with self.game_state_lock:
+                    self.own_gs.advance_timeline(1)
+                    self.renderer.render(self.own_gs)
                 clock.tick(constants.FPS)
 
             except Exception as e:

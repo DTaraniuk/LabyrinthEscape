@@ -146,3 +146,20 @@ class GameState:
                 player.center(new_pos.x, new_pos.y)
             self._update_player_vision(player)
 
+    def populate(self, other: 'GameState'):
+        self.time = other.time
+        if len(self.players) != len(other.players):
+            raise Exception("Invalid populate: different player count")
+
+        # copy player attributes
+        for i in range(len(self.players)):
+            self_player = self.players[i]
+            targ_player = other.players[i]
+            targ_pos = targ_player.get_center()
+            targ_dir = targ_player.move_direction
+            self_player.center(targ_pos.x, targ_pos.y)
+            self_player.move_direction = CoordPair(targ_dir.x, targ_dir.y)
+            self_player.is_alive = targ_player.is_alive
+
+
+

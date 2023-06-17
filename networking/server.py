@@ -88,7 +88,6 @@ class GameServer:
             print("Sending player ID to client...")
             conn.send(player_id.to_bytes(4, byteorder='big'))
             print("Player ID sent.")
-            helper.send_message(conn, self.gs)
             self.player_keys.append(player.name)
             self.players[player.name] = player
             self.clients[player.name] = conn
