@@ -117,15 +117,20 @@ class GameServer:
             time.sleep(0.1)
 
         print(f"Starting the game with {len(self.player_keys)} players")
-        # Send "start" message to all clients
         for name in self.player_keys:
             conn = self.clients[name]
             if conn:
-                # helper.send_message(conn, constants.START)
-                msg = input(f"Enter the message for {name}")
-                helper.send_message(conn, msg)
-                reply = helper.recv_message(conn)
-                print(f"Got the reply: {reply}")
+                helper.send_message(conn, constants.START)
+        # Send "start" message to all clients
+        while True:
+            for name in self.player_keys:
+                conn = self.clients[name]
+                if conn:
+                    # helper.send_message(conn, constants.START)
+                    msg = input(f"Enter the message for {name}")
+                    helper.send_message(conn, msg)
+                    reply = helper.recv_message(conn)
+                    print(f"Got the reply: {reply}")
 
         # Start reading player input and send them initial game state
         for name, thread in self.player_input_threads.items():
