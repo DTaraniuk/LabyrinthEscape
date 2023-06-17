@@ -20,6 +20,7 @@ class GameStateChange:
     def __init__(self, time: int):
         self.time = time
         self.player_positions: dict[str, CoordPair] = {}
+        self.player_lives: dict[str, bool] = {}
 
 
 class GameState:
@@ -49,6 +50,7 @@ class GameState:
         for player in self.players:
             new_pos = self._move_player(player, frames)
             change.player_positions[player.name] = new_pos
+            change.player_lives[player.name] = player.is_alive
             self._update_player_vision(player)
         self.check_win_lose()
         return change
@@ -148,6 +150,7 @@ class GameState:
     def apply_change(self, change: GameStateChange):
         self.time += change.time
         for player in self.players:
+            player.is_alive = change.player_lives[player.name]
             new_pos = change.player_positions.get(player.name)
             if new_pos:
                 player.center(new_pos.x, new_pos.y)
