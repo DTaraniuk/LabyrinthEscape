@@ -5,7 +5,8 @@ import time
 from common import constants, helper
 from game_logic import Player, GameState, Maze, Minotaur, CoordPair
 from threading import Thread
-from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+
 
 class GameServer:
     def __init__(self, host='localhost', port=7777):
@@ -47,31 +48,29 @@ class GameServer:
                 self.player_keys.remove(name)
                 return
 
+    def broadcast_change(self, change):
+        with ThreadPoolExecutor() as executor:
+            for name in self.player_keys:
+                executor.submit(self.send_change_to_client, name, change)
+
+    def send_change_to_client(self, name, change):
+        try:
+            conn = self.clients[name]
+            if conn:
+                helper.send_message(conn, change)
+        except Exception as e:
+            print(f"ERR: Error {e} occurred during broadcast to player {name}. Removing")
+            self.player_keys.remove(name)
+
     def advance_and_broadcast(self):
         clock = pygame.time.Clock()
-        advance_cnt = 0
         while self.running:
-            now = datetime.now().time()
-
-            print(f"Current time: {now}, game time: {self.gs.time}. Start")
             change = self.gs.advance_timeline(1)
-            advance_cnt += 1
 
-            if advance_cnt % 1000 == 0:
-                print(f"INFO: Advanced game state timeline {advance_cnt} times.")
+            if self.gs.time % 1000 == 0:
+                print(f"INFO: Current time: {self.gs.time}.")
 
-            for name in self.player_keys:
-                try:
-                    conn = self.clients[name]
-                    if conn:
-                        helper.send_message(conn, change)
-                except Exception as e:
-                    print(f"ERR: Error {e} occurred during broadcast to player {name}. Removing")
-                    self.player_keys.remove(name)
-
-            now = datetime.now().time()
-
-            print(f"Current time: {now}, game time: {self.gs.time}. End")
+            self.broadcast_change(change)
 
             clock.tick(constants.FPS)
 
@@ -92,17 +91,15 @@ class GameServer:
                                 name=f"Player{player_id}")
             self.gs.add_player(player)
 
-            print("Sending player ID to client...")
+            # send ID to client
             conn.send(player_id.to_bytes(4, byteorder='big'))
-            print("Player ID sent.")
             self.player_keys.append(player.name)
             self.players[player.name] = player
             self.clients[player.name] = conn
-            print(f"Player connected: {addr}")
+            print(f"Player connected: {addr} with id {player_id}")
 
             thread = Thread(target=self.input_movement, args=(player.name,), daemon=True)
             self.player_input_threads[player.name] = thread
-            print("Started thread to handle client.")
 
     def start(self):
         print("Server started, waiting for connections...")
@@ -117,20 +114,11 @@ class GameServer:
             time.sleep(0.1)
 
         print(f"Starting the game with {len(self.player_keys)} players")
+        # Send "start" message to all clients
         for name in self.player_keys:
             conn = self.clients[name]
             if conn:
                 helper.send_message(conn, constants.START)
-        # Send "start" message to all clients
-        while True:
-            for name in self.player_keys:
-                conn = self.clients[name]
-                if conn:
-                    # helper.send_message(conn, constants.START)
-                    msg = input(f"Enter the message for {name}")
-                    helper.send_message(conn, msg)
-                    reply = helper.recv_message(conn)
-                    print(f"Got the reply: {reply}")
 
         # Start reading player input and send them initial game state
         for name, thread in self.player_input_threads.items():

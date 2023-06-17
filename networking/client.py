@@ -47,7 +47,6 @@ class Client:
 
     # region run
     def update_game_state(self):
-        clock = pygame.time.Clock()
         while True:
             try:
                 game_state_change: GameStateChange = helper.recv_message(self.client)
@@ -57,11 +56,6 @@ class Client:
             except Exception as e:
                 print(f"Error: {e}")
                 break
-
-            now = datetime.now().time()
-
-            print(f"Current time: {now}, game time: {self.server_gs.time}")
-            clock.tick(constants.FPS)
 
     def send_movement(self):
         prev_vec = CoordPair()
@@ -81,12 +75,6 @@ class Client:
             print("Did not receive 'start' message from server.")
             self.client.close()
             return
-
-        while True:
-            msg = helper.recv_message(self.client)
-            print(f"Received message from server: {msg}. Sending back:")
-            reply = input("Enter the reply")
-            helper.send_message(self.client, reply)
 
         # receive initial game state from server
         self._receive_initial_game_state()
