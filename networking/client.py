@@ -20,7 +20,6 @@ class Client:
         self.win = pygame.display.set_mode((constants.WIDTH, constants.WIDTH))  # Create window with 800x800 resolution
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((ip, port))
-        self.game_state_lock = threading.Lock()
 
         self._receive_player_id()
         self.server_gs: GameState = None
@@ -28,7 +27,8 @@ class Client:
         self.renderer = Renderer(self.win, self.player_id)
 
         self.move_thread: threading.Thread = Thread(target=self.send_movement, daemon=True)
-        self.update_thread: threading.Thread = None
+        self.render_thread: threading.Thread = Thread(target=self.render_game, daemon=True)
+        self.update_thread: threading.Thread = Thread(target=self.update_game_state, daemon=True)
 
     # region init
     def _receive_player_id(self):
@@ -50,9 +50,8 @@ class Client:
         while True:
             try:
                 game_state_change: GameStateChange = helper.recv_message(self.client)
-                with self.game_state_lock:
-                    self.server_gs.apply_change(game_state_change)
-                    # self.own_gs.populate(self.server_gs)
+                self.server_gs.apply_change(game_state_change)
+                # self.own_gs.populate(self.server_gs)
             except Exception as e:
                 print(f"Error: {e}")
                 break
@@ -67,6 +66,20 @@ class Client:
 
             time.sleep(1.0 / constants.FPS)
 
+    def render_game(self):
+        clock = pygame.time.Clock()
+
+        while True:
+            try:
+                # self.own_gs.advance_timeline(1)
+                # self.renderer.render(self.own_gs)
+                self.renderer.render(self.server_gs)
+            except Exception as e:
+                print(f"Error: {e}")
+                break
+
+            clock.tick(constants.FPS)
+
     # endregion
     def run(self):
         # Wait for "start" message from server
@@ -79,12 +92,9 @@ class Client:
         # receive initial game state from server
         self._receive_initial_game_state()
         # self.own_gs = copy.deepcopy(self.server_gs)
-
-        self.update_thread = Thread(target=self.update_game_state, daemon=True)
         self.move_thread.start()
         self.update_thread.start()
-
-        clock = pygame.time.Clock()
+        self.render_thread.start()
 
         while True:
             for event in pygame.event.get():
@@ -92,20 +102,6 @@ class Client:
                     pygame.quit()
                     self.client.close()
                     return
-
-            try:
-                with self.game_state_lock:
-                    # self.own_gs.advance_timeline(1)
-                    # self.renderer.render(self.own_gs)
-
-                    self.renderer.render(self.server_gs)
-                clock.tick(constants.FPS)
-
-            except Exception as e:
-                print(f"Error: {e}")
-                break
-
-        self.client.close()
 
 
 pygame.init()
