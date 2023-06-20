@@ -6,6 +6,7 @@ from common import constants, helper
 from game_logic import Player, GameState, Maze, Minotaur, CoordPair
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
+from sock_message import SockMessage, MsgType
 
 
 class GameServer:
@@ -48,16 +49,24 @@ class GameServer:
                 self.player_keys.remove(name)
                 return
 
-    def broadcast_change(self, change):
+    def broadcast_movement_change(self, player_name: str, new_direction: CoordPair):
         with ThreadPoolExecutor() as executor:
+            msg = SockMessage(MsgType.MOVE, (player_name, new_direction, self.gs.time))
             for name in self.player_keys:
-                executor.submit(self.send_change_to_client, name, change)
+                if name != player_name:
+                    executor.submit(self.send_message_to_client, name, msg)
 
-    def send_change_to_client(self, name, change):
+    def broadcast_gs_change(self, change):
+        with ThreadPoolExecutor() as executor:
+            msg = SockMessage(MsgType.GSC, change)
+            for name in self.player_keys:
+                executor.submit(self.send_message_to_client, name, msg)
+
+    def send_message_to_client(self, name, msg: SockMessage):
         try:
             conn = self.clients[name]
             if conn:
-                helper.send_message(conn, change)
+                helper.send_message(conn, msg)
         except Exception as e:
             print(f"ERR: Error {e} occurred during broadcast to player {name}. Removing")
             self.player_keys.remove(name)
@@ -70,7 +79,7 @@ class GameServer:
             if self.gs.time % 1000 == 0:
                 print(f"INFO: Current time: {self.gs.time}.")
 
-            self.broadcast_change(change)
+            self.broadcast_gs_change(change)
 
             clock.tick(constants.FPS)
 

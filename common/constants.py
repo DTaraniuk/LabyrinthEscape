@@ -22,15 +22,12 @@ GRID_WIDTH = 1
 GRID = False
 
 IMG_FOLDER = 'img'
-ALIVE = 'alive'
 ALIVE_PLAYER_IMG = 'rat.png'
-ESCAPED = 'escaped'
 ESCAPED_PLAYER_IMG = 'victorious_rat.png'
-DEAD = 'dead'
 DEAD_PLAYER_IMG = 'dead_rat.png'
 MINOTAUR_IMG = 'minotaur.png'
 
-FPS = 30
+FPS = 60
 _secs_to_pass_cell = 1
 PLAYER_SPEED = int(WIDTH/ROWS/FPS/_secs_to_pass_cell)
 PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1  # for smoothness, this has to be int, but > 0 ofc

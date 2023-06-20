@@ -7,12 +7,11 @@ import copy
 import threading
 proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(proj_dir)
-os.chdir(proj_dir)
 from common import helper, constants
 from graphics import Renderer
 from game_logic import GameState, GameStateChange, CoordPair
 from threading import Thread
-from datetime import datetime
+from sock_message import SockMessage, MsgType
 
 
 class Client:
@@ -49,9 +48,14 @@ class Client:
     def update_game_state(self):
         while True:
             try:
-                game_state_change: GameStateChange = helper.recv_message(self.client)
-                self.server_gs.apply_change(game_state_change)
-                # self.own_gs.populate(self.server_gs)
+                msg: SockMessage = helper.recv_message(self.client)
+                if msg.msg_type == MsgType.GSC:
+                    game_state_change: GameStateChange = msg.msg_content
+                    self.server_gs.apply_change(game_state_change)
+                elif msg.msg_type == MsgType.MOVE:
+                    player_name, new_direction = msg.msg_content
+                    self.server_gs.update_player_direction(player_name, new_direction)
+
             except Exception as e:
                 print(f"Error: {e}")
                 break

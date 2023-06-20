@@ -13,9 +13,9 @@ class CoordPair:
         self.y -= other.y
         return self
 
-    def __mul__(self, other):
-        self.x *= other
-        self.y *= other
+    def __mul__(self, value):
+        self.x *= value
+        self.y *= value
         return self
 
     def to_tuple(self) -> tuple[float, float]:

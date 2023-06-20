@@ -1,5 +1,12 @@
-from common.constants import*
+from common.constants import *
 from .coordpair import CoordPair
+from enum import Enum
+
+
+class PlayerState(Enum):
+    ALIVE = 'alive'
+    ESCAPED = 'escaped'
+    DEAD = 'dead'
 
 
 class Player:
@@ -10,20 +17,14 @@ class Player:
         self._y: float = pos.y
         self.size = size
         self.speed = PLAYER_SPEED
-        self.is_alive = True
-        self.escaped = False
+        self.state: PlayerState = PlayerState.ALIVE
         self.move_direction: CoordPair = CoordPair()
-        self.images: dict[str, str] = {ALIVE: alive_img,
-                                       DEAD: dead_img,
-                                       ESCAPED: escaped_img}
+        self.images: dict[PlayerState, str] = {PlayerState.ALIVE: alive_img,
+                                               PlayerState.DEAD: dead_img,
+                                               PlayerState.ESCAPED: escaped_img}
 
     def get_image(self):
-        if self.escaped:
-            return self.images[ESCAPED]
-        elif self.is_alive:
-            return self.images[ALIVE]
-        else:
-            return self.images[DEAD]
+        return self.images[self.state]
 
     def set_pos(self, coords: CoordPair):
         self._x, self._y = coords

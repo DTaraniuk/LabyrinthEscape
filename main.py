@@ -1,6 +1,6 @@
 import pygame
 from pygame import Surface as pgs
-from game_logic import Maze, CoordPair, Player, Minotaur, GameState, pathfinding
+from game_logic import Maze, CoordPair, Player, Minotaur, GameState, pathfinding, PlayerState
 from common.constants import*
 from common import helper
 from graphics import Renderer
@@ -18,7 +18,8 @@ def main(win: pgs) -> None:
 
     center = (ROWS // 2 + 0.5) * maze.cell_width
     player_start = CoordPair(center, center)
-    player = Player(player_start, (maze.cell_width/2, maze.cell_width/2), "Main-Kun")
+    player_name = 'Main-Kun'
+    player = Player(player_start, (maze.cell_width/2, maze.cell_width/2), player_name)
 
     mino_start = maze.get_random_edge_cell().get_pos()
 
@@ -59,16 +60,13 @@ def main(win: pgs) -> None:
 
         gs.advance_timeline(1)
 
-        victory = gs.check_win_lose()
-        if victory is None:
+        if player.state == PlayerState.ESCAPED:
             player_renderer.user_message(f"You have escaped", FONT_SIZE)
             maze.randomize_victory_cell()
             player_renderer.refresh(gs)
-        else:
-            for player, is_dead in victory.items():
-                if is_dead:
-                    player_renderer.user_message(f"You have been slain by the minotaur", FONT_SIZE)
-                    gs.reset()
+        elif player.state == PlayerState.DEAD:
+            player_renderer.user_message(f"You have been slain by the minotaur", FONT_SIZE)
+            gs.reset()
 
         clock.tick(FPS)
         player_renderer.render(gs)

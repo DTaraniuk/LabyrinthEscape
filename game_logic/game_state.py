@@ -1,6 +1,6 @@
 import math
 from common import constants
-from .player import Player
+from .player import Player, PlayerState
 from .minotaur import Minotaur
 from .maze import Maze
 from .cell import Cell
@@ -20,8 +20,8 @@ class GameStateChange:
     def __init__(self, time: int):
         self.time = time
         self.player_positions: dict[str, CoordPair] = {}
-        self.player_lives: dict[str, bool] = {}
-        self.player_escapes: dict[str, bool] = {}
+        self.player_directions: dict[str, CoordPair] = {}
+        self.player_states: dict[str, PlayerState] = {}
 
 
 class GameState:
@@ -48,14 +48,19 @@ class GameState:
         if self.minotaur:
             self.minotaur.chase_player(self.maze, self.players)
         for player in self.players:
-            change.player_lives[player.name] = player.is_alive
-            if not player.is_alive:
+            if player.state == PlayerState.DEAD:
                 continue
-            change.player_escapes[player.name] = player.escaped
-            new_pos = self._move_player(player, frames)
-            change.player_positions[player.name] = new_pos
+
+            old_pos = player.get_pos()
+            self._move_player(player, frames)
+            new_pos = player.get_pos()
+            if old_pos != new_pos:
+                change.player_positions[player.name] = new_pos
             self._update_player_vision(player)
-        self.check_win_lose()
+        state_update = self.check_win_lose()
+        for name, state in state_update.items():
+            change.player_states[name] = state
+
         return change
 
     def get_player_vision(self, player: Player) -> set[Cell]:
@@ -81,29 +86,30 @@ class GameState:
         while self._all_player_mem and self.time - self._all_player_mem[player][0][0] > constants.PLAYER_MEM_SIZE:
             self._all_player_mem[player].popleft()
 
-    def check_win_lose(self) -> Optional[dict[Player, bool]]:
+    def check_win_lose(self) -> dict[str, PlayerState]:
         res = {}
         for player in self.players:
-            if player == self.minotaur or player.escaped:
+            if player == self.minotaur or player.state != PlayerState.ALIVE:
                 continue
             player_cell = self.maze.get_cell(player.get_center())
 
             dist = player.get_center() - self.minotaur.get_center()
             abs_dist = math.sqrt(abs(dist.x)**2 + abs(dist.y)**2)
-            res[player] = abs_dist < constants.KILL_DIST
-            if res[player]:
+            player_dead = abs_dist < constants.KILL_DIST
+            if player_dead:
                 self.kill_player(player)
+                res[player.name] = PlayerState.DEAD
 
             if player_cell == self.maze.victory_cell:
-                player.escaped = True
-                return None
+                player.state = PlayerState.ESCAPED
+                res[player.name] = PlayerState.ESCAPED
         return res
 
     def kill_player(self, player):
-        player.is_alive = False
+        player.state = PlayerState.DEAD
         self._all_player_mem[player].clear()
 
-    def _move_player(self, player: Player, frames: int) -> CoordPair:
+    def _move_player(self, player: Player, frames: int):
         x, y = player.get_center()
         dx, dy = player.move_direction
         target_x = min(self.maze.width - 1, x + dx * player.speed * frames)
@@ -133,7 +139,6 @@ class GameState:
                 target_y_cell.request_update()
 
         player.center(target_x, target_y)
-        return CoordPair(target_x, target_y)
 
     def reset(self):
         self.maze = Maze(constants.ROWS, constants.WIDTH)
@@ -147,17 +152,15 @@ class GameState:
         for player in self.players:
             if player == self.minotaur:
                 continue
-            player.is_alive = True
+            player.state = PlayerState.ALIVE
             player.set_pos(player_start)
 
     def apply_change(self, change: GameStateChange):
         self.time += change.time
         for player in self.players:
             # Ensure the player's name exists in the dictionary before attempting to access it
-            if player.name in change.player_lives:
-                player.is_alive = change.player_lives[player.name]
-            if player.name in change.player_escapes:
-                player.escaped = change.player_escapes[player.name]
+            if player.name in change.player_states:
+                player.state = change.player_states[player.name]
             if player.name in change.player_positions:
                 new_pos = change.player_positions[player.name]
                 player.center(new_pos.x, new_pos.y)
@@ -176,7 +179,16 @@ class GameState:
             targ_dir = targ_player.move_direction
             self_player.center(targ_pos.x, targ_pos.y)
             self_player.move_direction = CoordPair(targ_dir.x, targ_dir.y)
-            self_player.is_alive = targ_player.is_alive
+            self_player.state = targ_player.state
 
-
+    def update_player_direction(self, name: str, new_direction: CoordPair, time: int):
+        if time > self.time:
+            raise Exception(f"Got invalid time update: {time}")
+        player = next((p for p in self.players if p.name == name), None)
+        if not player:
+            return
+        old_pos = player.get_pos()
+        new_pos = old_pos + new_direction*(self.time - time) + player.move_direction*(time - self.time)
+        player.set_pos(new_pos)
+        player.move_direction = new_direction
 

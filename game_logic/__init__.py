@@ -6,4 +6,4 @@ from .lobby import Lobby
 from .maze import Maze
 from .minotaur import Minotaur
 from .pathfinding import PathfindingRes
-from .player import Player
+from .player import Player, PlayerState
