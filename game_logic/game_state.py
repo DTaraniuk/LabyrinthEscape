@@ -17,8 +17,8 @@ def index_string(n: int) -> str:
 
 
 class GameStateChange:
-    def __init__(self, time: int):
-        self.time = time
+    def __init__(self, step: int):
+        self.step = step
         self.player_positions: dict[str, CoordPair] = {}
         self.player_directions: dict[str, CoordPair] = {}
         self.player_states: dict[str, PlayerState] = {}
@@ -30,7 +30,7 @@ class GameState:
         self.minotaur = None
         self.maze = maze
         self._all_player_mem: dict[Player, deque[tuple[int, list[Cell]]]] = {}
-        self.time: int = 0
+        self.step: int = 0
 
     def add_player(self, player: Player):  # if there is no minotaur, add as minotaur
         if self.minotaur is None:
@@ -43,19 +43,17 @@ class GameState:
         self._all_player_mem[player] = deque()
 
     def advance_timeline(self, frames) -> GameStateChange:
-        change = GameStateChange(frames)
-        self.time += frames
+        self.step += frames
+        change = GameStateChange(self.step)
         if self.minotaur:
             self.minotaur.chase_player(self.maze, self.players)
         for player in self.players:
             if player.state == PlayerState.DEAD:
                 continue
 
-            old_pos = player.get_pos()
             self._move_player(player, frames)
-            new_pos = player.get_pos()
-            if old_pos != new_pos:
-                change.player_positions[player.name] = new_pos
+            change.player_positions[player.name] = player.get_pos()
+            change.player_directions[player.name] = player.move_direction
             self._update_player_vision(player)
         state_update = self.check_win_lose()
         for name, state in state_update.items():
@@ -80,10 +78,10 @@ class GameState:
         player_cell = self.maze.get_cell(player.get_center())
         current_vision = player_cell.get_visible_cells()
         if not self._all_player_mem[player] or self._all_player_mem[player][-1][1] != current_vision:
-            self._all_player_mem[player].append((self.time, current_vision))
+            self._all_player_mem[player].append((self.step, current_vision))
         else:
-            self._all_player_mem[player][-1] = (self.time, self._all_player_mem[player][-1][1])
-        while self._all_player_mem and self.time - self._all_player_mem[player][0][0] > constants.PLAYER_MEM_SIZE:
+            self._all_player_mem[player][-1] = (self.step, self._all_player_mem[player][-1][1])
+        while self._all_player_mem and self.step - self._all_player_mem[player][0][0] > constants.PLAYER_MEM_SIZE:
             self._all_player_mem[player].popleft()
 
     def check_win_lose(self) -> dict[str, PlayerState]:
@@ -156,18 +154,20 @@ class GameState:
             player.set_pos(player_start)
 
     def apply_change(self, change: GameStateChange):
-        self.time += change.time
+        self.step = change.step
         for player in self.players:
             # Ensure the player's name exists in the dictionary before attempting to access it
             if player.name in change.player_states:
                 player.state = change.player_states[player.name]
             if player.name in change.player_positions:
-                new_pos = change.player_positions[player.name]
-                player.center(new_pos.x, new_pos.y)
+                player.set_pos(change.player_positions[player.name])
+            if player.name in change.player_directions:
+                player.move_direction = change.player_directions[player.name]
+
             self._update_player_vision(player)
 
     def populate(self, other: 'GameState'):
-        self.time = other.time
+        self.step = other.step
         if len(self.players) != len(other.players):
             raise Exception("Invalid populate: different player count")
 
@@ -182,13 +182,11 @@ class GameState:
             self_player.state = targ_player.state
 
     def update_player_direction(self, name: str, new_direction: CoordPair, time: int):
-        if time > self.time:
-            raise Exception(f"Got invalid time update: {time}")
         player = next((p for p in self.players if p.name == name), None)
         if not player:
             return
-        old_pos = player.get_pos()
-        new_pos = old_pos + new_direction*(self.time - time) + player.move_direction*(time - self.time)
-        player.set_pos(new_pos)
+        if time < self.step:    # we need to adjust the position due to outdated direction update
+            adjustment = (new_direction - player.move_direction) * (self.step - time) * player.speed
+            player.set_pos(player.get_pos() + adjustment)
         player.move_direction = new_direction
 

@@ -1,17 +1,20 @@
 import pygame
 import socket
-import time
 import sys
 import os
-import copy
+import time
 import threading
 proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(proj_dir)
 sys.path.append(proj_dir)
 from common import helper, constants
 from graphics import Renderer
 from game_logic import GameState, GameStateChange, CoordPair
 from threading import Thread
 from sock_message import SockMessage, MsgType
+from datetime import datetime, timedelta
+from network_constants import *
+from live_clock import LiveClock
 
 
 class Client:
@@ -21,9 +24,9 @@ class Client:
         self.client.connect((ip, port))
 
         self._receive_player_id()
-        self.server_gs: GameState = None
-        # self.own_gs: GameState = None
+        self.client_gs: GameState = None
         self.renderer = Renderer(self.win, self.player_id)
+        self.game_state_lock: threading.Lock = threading.Lock()
 
         self.move_thread: threading.Thread = Thread(target=self.send_movement, daemon=True)
         self.render_thread: threading.Thread = Thread(target=self.render_game, daemon=True)
@@ -40,7 +43,7 @@ class Client:
             print("failed to get initial gs")
             self.client.close()
             exit(1)
-        self.server_gs = gs
+        self.client_gs = gs
 
     # endregion
 
@@ -49,13 +52,14 @@ class Client:
         while True:
             try:
                 msg: SockMessage = helper.recv_message(self.client)
-                if msg.msg_type == MsgType.GSC:
-                    game_state_change: GameStateChange = msg.msg_content
-                    self.server_gs.apply_change(game_state_change)
-                elif msg.msg_type == MsgType.MOVE:
-                    player_name, new_direction = msg.msg_content
-                    self.server_gs.update_player_direction(player_name, new_direction)
-
+                with self.game_state_lock:
+                    if msg.msg_type == MsgType.GSC:
+                        game_state_change: GameStateChange = msg.msg_content
+                        self.client_gs.apply_change(game_state_change)
+                        print(f"recv update on time\t{self.client_gs.step} at {datetime.now().time()}")
+                    elif msg.msg_type == MsgType.MOVE:
+                        player_name, new_direction, time = msg.msg_content
+                        self.client_gs.update_player_direction(player_name, new_direction, time)
             except Exception as e:
                 print(f"Error: {e}")
                 break
@@ -65,24 +69,29 @@ class Client:
         while True:
             player_move_vector = helper.input_movement()
             if not player_move_vector.equals(prev_vec):
+                print(f"sent move on time {self.client_gs.step}")
                 helper.send_message(self.client, player_move_vector)
                 prev_vec = player_move_vector
 
             time.sleep(1.0 / constants.FPS)
 
     def render_game(self):
-        clock = pygame.time.Clock()
-
+        clock = LiveClock()
         while True:
+            # print(f"Time before client advance&render on time {self.client_gs.time} : {datetime.now()}")
+            curr_time = datetime.now()
             try:
-                # self.own_gs.advance_timeline(1)
-                # self.renderer.render(self.own_gs)
-                self.renderer.render(self.server_gs)
+                with self.game_state_lock:
+                    self.client_gs.advance_timeline(1)
+                self.renderer.render(self.client_gs)
             except Exception as e:
                 print(f"Error: {e}")
                 break
 
+            # print(f"Time before tick : {datetime.now()}")
             clock.tick(constants.FPS)
+            print(f"{(datetime.now() - curr_time).total_seconds()}\t{datetime.now().time()}")
+            # print(f"Time after tick : {datetime.now()}")
 
     # endregion
     def run(self):
@@ -95,7 +104,7 @@ class Client:
 
         # receive initial game state from server
         self._receive_initial_game_state()
-        # self.own_gs = copy.deepcopy(self.server_gs)
+
         self.move_thread.start()
         self.update_thread.start()
         self.render_thread.start()

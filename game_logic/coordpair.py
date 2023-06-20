@@ -4,19 +4,19 @@ class CoordPair:
         self.y = y
 
     def __add__(self, other: 'CoordPair'):
-        self.x += other.x
-        self.y += other.y
-        return self
+        x = self.x + other.x
+        y = self.y + other.y
+        return CoordPair(x, y)
 
-    def __sub__(self, other):
-        self.x -= other.x
-        self.y -= other.y
-        return self
+    def __sub__(self, other: 'CoordPair'):
+        x = self.x - other.x
+        y = self.y - other.y
+        return CoordPair(x, y)
 
     def __mul__(self, value):
-        self.x *= value
-        self.y *= value
-        return self
+        x = self.x * value
+        y = self.y * value
+        return CoordPair(x, y)
 
     def to_tuple(self) -> tuple[float, float]:
         return self.x, self.y

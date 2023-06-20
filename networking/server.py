@@ -7,6 +7,9 @@ from game_logic import Player, GameState, Maze, Minotaur, CoordPair
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 from sock_message import SockMessage, MsgType
+from network_constants import *
+from datetime import datetime
+from live_clock import LiveClock
 
 
 class GameServer:
@@ -42,23 +45,17 @@ class GameServer:
                 if conn and player:
                     move_direction = helper.recv_message(conn)
                     player.move_direction = move_direction
+                    msg = SockMessage(MsgType.MOVE, (name, move_direction, self.gs.step))
+                    self.broadcast_message(msg)
                 else:
-                    print(f"WARN: Failed to input movement for player {name} on time {self.gs.time}.")
+                    print(f"WARN: Failed to input movement for player {name} on time {self.gs.step}.")
             except Exception as e:
                 print(f"ERR: Error {e} occurred during movement input for player {name}. Removing")
                 self.player_keys.remove(name)
                 return
 
-    def broadcast_movement_change(self, player_name: str, new_direction: CoordPair):
+    def broadcast_message(self, msg: SockMessage):
         with ThreadPoolExecutor() as executor:
-            msg = SockMessage(MsgType.MOVE, (player_name, new_direction, self.gs.time))
-            for name in self.player_keys:
-                if name != player_name:
-                    executor.submit(self.send_message_to_client, name, msg)
-
-    def broadcast_gs_change(self, change):
-        with ThreadPoolExecutor() as executor:
-            msg = SockMessage(MsgType.GSC, change)
             for name in self.player_keys:
                 executor.submit(self.send_message_to_client, name, msg)
 
@@ -72,16 +69,21 @@ class GameServer:
             self.player_keys.remove(name)
 
     def advance_and_broadcast(self):
-        clock = pygame.time.Clock()
+        clock = LiveClock()
         while self.running:
+            curr_time = datetime.now()
             change = self.gs.advance_timeline(1)
+            # print(f"server advance on time {self.gs.time}")
 
-            if self.gs.time % 1000 == 0:
-                print(f"INFO: Current time: {self.gs.time}.")
+            if self.gs.step % GSC_CHANGE_RATE == 0:
+                msg = SockMessage(MsgType.GSC, change)
+                self.broadcast_message(msg)
+                print(f"Sent gs update to clients on time {change.step} at {datetime.now().time()}")
 
-            self.broadcast_gs_change(change)
-
+            # print(f"Time before tick : {datetime.now()}")
             clock.tick(constants.FPS)
+            print(f"{(datetime.now() - curr_time).total_seconds()}\t{datetime.now().time()}")
+            # print(f"Time after tick : {datetime.now()}")
 
     def listen_for_connections(self):
         while True:
