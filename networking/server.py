@@ -71,18 +71,18 @@ class GameServer:
     def advance_and_broadcast(self):
         clock = LiveClock()
         while self.running:
-            curr_time = datetime.now()
+            # curr_time = datetime.now()
             change = self.gs.advance_timeline(1)
             # print(f"server advance on time {self.gs.time}")
 
             if self.gs.step % GSC_CHANGE_RATE == 0:
                 msg = SockMessage(MsgType.GSC, change)
                 self.broadcast_message(msg)
-                print(f"Sent gs update to clients on time {change.step} at {datetime.now().time()}")
+                # print(f"Sent gs update to clients on time {change.step} at {datetime.now().time()}")
 
             # print(f"Time before tick : {datetime.now()}")
             clock.tick(constants.FPS)
-            print(f"{(datetime.now() - curr_time).total_seconds()}\t{datetime.now().time()}")
+            # print(f"{(datetime.now() - curr_time).total_seconds()}\t{datetime.now().time()}")
             # print(f"Time after tick : {datetime.now()}")
 
     def listen_for_connections(self):

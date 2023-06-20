@@ -56,7 +56,7 @@ class Client:
                     if msg.msg_type == MsgType.GSC:
                         game_state_change: GameStateChange = msg.msg_content
                         self.client_gs.apply_change(game_state_change)
-                        print(f"recv update on time\t{self.client_gs.step} at {datetime.now().time()}")
+                        # print(f"recv update on time\t{self.client_gs.step} at {datetime.now().time()}")
                     elif msg.msg_type == MsgType.MOVE:
                         player_name, new_direction, time = msg.msg_content
                         self.client_gs.update_player_direction(player_name, new_direction, time)
@@ -69,7 +69,7 @@ class Client:
         while True:
             player_move_vector = helper.input_movement()
             if not player_move_vector.equals(prev_vec):
-                print(f"sent move on time {self.client_gs.step}")
+                # print(f"sent move on time {self.client_gs.step}")
                 helper.send_message(self.client, player_move_vector)
                 prev_vec = player_move_vector
 
@@ -79,7 +79,7 @@ class Client:
         clock = LiveClock()
         while True:
             # print(f"Time before client advance&render on time {self.client_gs.time} : {datetime.now()}")
-            curr_time = datetime.now()
+            # curr_time = datetime.now()
             try:
                 with self.game_state_lock:
                     self.client_gs.advance_timeline(1)
@@ -90,7 +90,7 @@ class Client:
 
             # print(f"Time before tick : {datetime.now()}")
             clock.tick(constants.FPS)
-            print(f"{(datetime.now() - curr_time).total_seconds()}\t{datetime.now().time()}")
+            # print(f"{(datetime.now() - curr_time).total_seconds()}\t{datetime.now().time()}")
             # print(f"Time after tick : {datetime.now()}")
 
     # endregion
