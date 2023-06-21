@@ -105,7 +105,7 @@ class GameState:
 
     def kill_player(self, player):
         player.state = PlayerState.DEAD
-        self._all_player_mem[player].clear()
+        self._all_player_mem[player.name].clear()
 
     def _move_player(self, player: Player, frames: int):
         x, y = player.get_center()

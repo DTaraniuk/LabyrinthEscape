@@ -76,8 +76,8 @@ class Client:
     def render_game(self):
         clock = LiveClock()
         while True:
-            print(self.client_gs.step)
-            curr_time = datetime.now()
+            # print(self.client_gs.step)
+            # curr_time = datetime.now()
             try:
                 # print(f"__ advance render {(datetime.now() - curr_time).total_seconds()}")
                 with self.game_state_lock:
@@ -117,7 +117,7 @@ class Client:
                     pygame.quit()
                     self.client.close()
                     return
-            clock.tick(2)
+            clock.tick(10)
 
 
 pygame.init()
