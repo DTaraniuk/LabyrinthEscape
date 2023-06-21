@@ -23,9 +23,9 @@ class Client:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((ip, port))
 
-        self._receive_player_id()
+        self._receive_player_name()
         self.client_gs: GameState = None
-        self.renderer = Renderer(self.win, self.player_id)
+        self.renderer = Renderer(self.win, self.player_name)
         self.game_state_lock: threading.Lock = threading.Lock()
 
         self.move_thread: threading.Thread = Thread(target=self.send_movement, daemon=True)
@@ -33,9 +33,8 @@ class Client:
         self.update_thread: threading.Thread = Thread(target=self.update_game_state, daemon=True)
 
     # region init
-    def _receive_player_id(self):
-        received_data = self.client.recv(4)
-        self.player_id = int.from_bytes(received_data, byteorder='big')
+    def _receive_player_name(self):
+        self.player_name: str = helper.recv_message(self.client)
 
     def _receive_initial_game_state(self):
         gs = helper.recv_message(self.client)
@@ -78,12 +77,15 @@ class Client:
     def render_game(self):
         clock = LiveClock()
         while True:
-            # print(f"Time before client advance&render on time {self.client_gs.time} : {datetime.now()}")
-            # curr_time = datetime.now()
+            print(self.client_gs.step)
+            curr_time = datetime.now()
             try:
+                print(f"__ advance render {(datetime.now() - curr_time).total_seconds()}")
                 with self.game_state_lock:
                     self.client_gs.advance_timeline(1)
+                print(f"advance __ render {(datetime.now() - curr_time).total_seconds()}")
                 self.renderer.render(self.client_gs)
+                print(f"advance render __ {(datetime.now() - curr_time).total_seconds()}")
             except Exception as e:
                 print(f"Error: {e}")
                 break

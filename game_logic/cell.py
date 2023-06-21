@@ -12,7 +12,7 @@ class Cell:
         self._neighbors: dict[str, 'Cell'] = {}
         self.total_rows = total_rows
         self._color: Tuple[int, int, int] = WHITE
-        self.is_up_to_date = False
+        self._is_updated = False
 
     def __lt__(self, other):
         return self.index_in_row + self.index_in_col < other.index_in_row + other.index_in_col
@@ -25,7 +25,7 @@ class Cell:
     def color(self, value):
         if value != self._color:
             self._color = value
-            self.request_update()
+            self.is_updated = False
 
     def is_neighbor(self, other) -> bool:
         return other in self._neighbors.values()
@@ -40,11 +40,13 @@ class Cell:
             self._neighbors[dir_.name] = other
             other._neighbors[dir_.opposite().name] = self
 
-    def request_update(self):
-        self.is_up_to_date = False
+    @property
+    def is_updated(self):
+        return self._is_updated
 
-    def mark_updated(self):
-        self.is_up_to_date = True
+    @is_updated.setter
+    def is_updated(self, value):
+        self._is_updated = value
 
     def get_index(self) -> Tuple[int, int]:
         return self.index_in_row, self.index_in_col

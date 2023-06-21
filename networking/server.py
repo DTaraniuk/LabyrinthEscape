@@ -18,7 +18,7 @@ class GameServer:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((host, port))
         self.server.listen(2)
-        self.players: dict[str, Player] = {}
+        self.players: list[str] = []
         self.clients: dict[str, socket.socket] = {}
         self.player_keys: list[str] = []
 
@@ -41,7 +41,7 @@ class GameServer:
         while self.running:
             try:
                 conn = self.clients[name]
-                player = self.players[name]
+                player = self.gs.players[name]
                 if conn and player:
                     move_direction = helper.recv_message(conn)
                     player.move_direction = move_direction
@@ -102,10 +102,10 @@ class GameServer:
                                 name=f"Player{player_id}")
             self.gs.add_player(player)
 
-            # send ID to client
-            conn.send(player_id.to_bytes(4, byteorder='big'))
+            # send player name to client
+            helper.send_message(conn, player.name)
             self.player_keys.append(player.name)
-            self.players[player.name] = player
+            self.players.append(player.name)
             self.clients[player.name] = conn
             print(f"Player connected: {addr} with id {player_id}")
 

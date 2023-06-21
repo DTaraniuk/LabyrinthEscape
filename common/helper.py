@@ -2,7 +2,7 @@ from typing import Callable
 import struct
 import pygame
 import pickle
-from typing import TYPE_CHECKING
+import math
 from .constants import *
 from game_logic import Maze, CoordPair, Cell, PathfindingRes
 
@@ -109,3 +109,57 @@ def output_obj_to_file(obj, filename):
     """ Output the object to a file. """
     with open(filename, 'w') as file:
         file.write(str(obj_dict(obj)))
+
+
+def wrap_text(text: str, font: pygame.font.Font, max_width: int) -> list[str]:
+    words = text.split()
+    lines = []
+    current_line = []
+
+    for word in words:
+        current_line.append(word)
+        line_width, _ = font.size(' '.join(current_line))
+
+        if line_width > max_width:
+            current_line.pop()
+            lines.append(' '.join(current_line))
+            current_line = [word]
+
+    if current_line:
+        lines.append(' '.join(current_line))
+
+    return lines
+
+
+def create_text_frame(text: str,
+                      font: pygame.font.Font,
+                      text_color: tuple[int, int, int],
+                      frame_color: tuple[int, int, int],
+                      padding: int,
+                      aspect_ratio: tuple[int, int]
+                      ) -> pygame.Surface:
+    # create a surface to get total len
+    line_surface = font.render(text, True, text_color)
+    length = line_surface.get_width()
+    height = font.get_height()
+    desired_width = int(math.sqrt(height * aspect_ratio[0] / aspect_ratio[1] * length))
+
+    # Calculate lines with the desired width.
+    lines = wrap_text(text, font, desired_width)
+    line_surfaces = [font.render(line, True, text_color) for line in lines]
+    max_line_width = max(line_surface.get_width() for line_surface in line_surfaces)
+
+    frame_width = max_line_width + 2 * padding
+    frame_height = height * lines.__len__() + 2 * padding
+
+    frame_surface = pygame.Surface((frame_width, frame_height), pygame.SRCALPHA)
+    frame_surface.fill(WHITE)
+
+    pygame.draw.rect(frame_surface, frame_color, (0, 0, frame_width, frame_height), padding)
+
+    for i, line_surface in enumerate(line_surfaces):
+        x = padding
+        y = padding + i * height
+        frame_surface.blit(line_surface, (x, y))
+
+    return frame_surface

@@ -1,3 +1,7 @@
+import pygame
+
+pygame.init()
+
 # region colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -27,22 +31,19 @@ ESCAPED_PLAYER_IMG = 'victorious_rat.png'
 DEAD_PLAYER_IMG = 'dead_rat.png'
 MINOTAUR_IMG = 'minotaur.png'
 
-FPS = 30
+FPS = 600
 _secs_to_pass_cell = 1
-PLAYER_SPEED = int(WIDTH/ROWS/FPS/_secs_to_pass_cell)
-PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1  # for smoothness, this has to be int, but > 0 ofc
-PLAYER_MEM_SIZE = 400
-MINOTAUR_SPEED = PLAYER_SPEED/2
+PLAYER_SPEED = WIDTH/ROWS/FPS/_secs_to_pass_cell
+PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1
+_secs_player_mem = 10
+PLAYER_MEM_SIZE = FPS * _secs_player_mem
+MINOTAUR_SPEED = PLAYER_SPEED * 2/3
 KILL_DIST = WIDTH/ROWS/3
 # endregion
 
-# region surfaces
-SURFACE_MAIN = "main"
-SURFACE_MAZE = "maze"
-SURFACE_GRID = "grid"
-SURFACE_PATH = "path"
-SURFACE_TEXT = "text"
-SURFACE_PLAY = "play"
+# region graphics
+
+PLAYER_NAME_FONT = pygame.font.Font(None, 24)  # Parameters are 'None' or a filename, and a size (in points)
 # endregion
 
 # region network signals

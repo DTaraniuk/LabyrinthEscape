@@ -1,17 +1,14 @@
-import pygame
+from common.constants import*
 from pygame import Surface as pgs
 from game_logic import Maze, CoordPair, Player, Minotaur, GameState, pathfinding, PlayerState
-from common.constants import*
 from common import helper
 from graphics import Renderer
 
-pygame.init()
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
 pygame.display.set_caption("Labyrinth Escape")
 
 
 def main(win: pgs) -> None:
-    player_renderer = Renderer(win, 1)  # 1 is the player index, 0 for minotaur
 
     maze = Maze(ROWS, WIDTH)
     maze.generate_labyrinth()
@@ -20,6 +17,7 @@ def main(win: pgs) -> None:
     player_start = CoordPair(center, center)
     player_name = 'Main-Kun'
     player = Player(player_start, (maze.cell_width/2, maze.cell_width/2), player_name)
+    player_renderer = Renderer(win, player_name)  # 1 is the player index, 0 for minotaur
 
     mino_start = maze.get_random_edge_cell().get_pos()
 
