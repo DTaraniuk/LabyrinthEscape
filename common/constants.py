@@ -31,7 +31,7 @@ ESCAPED_PLAYER_IMG = 'victorious_rat.png'
 DEAD_PLAYER_IMG = 'dead_rat.png'
 MINOTAUR_IMG = 'minotaur.png'
 
-FPS = 600
+FPS = 60
 _secs_to_pass_cell = 1
 PLAYER_SPEED = WIDTH/ROWS/FPS/_secs_to_pass_cell
 PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1

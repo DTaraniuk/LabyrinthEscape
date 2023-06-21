@@ -24,7 +24,6 @@ class Client:
         self.client.connect((ip, port))
 
         self._receive_player_name()
-        self.client_gs: GameState = None
         self.renderer = Renderer(self.win, self.player_name)
         self.game_state_lock: threading.Lock = threading.Lock()
 
@@ -111,12 +110,14 @@ class Client:
         self.update_thread.start()
         self.render_thread.start()
 
+        clock = LiveClock()
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     self.client.close()
                     return
+            clock.tick(2)
 
 
 pygame.init()
