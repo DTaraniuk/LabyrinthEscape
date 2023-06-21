@@ -79,12 +79,12 @@ class Client:
             print(self.client_gs.step)
             curr_time = datetime.now()
             try:
-                print(f"__ advance render {(datetime.now() - curr_time).total_seconds()}")
+                # print(f"__ advance render {(datetime.now() - curr_time).total_seconds()}")
                 with self.game_state_lock:
                     self.client_gs.advance_timeline(1)
-                print(f"advance __ render {(datetime.now() - curr_time).total_seconds()}")
+                # print(f"advance __ render {(datetime.now() - curr_time).total_seconds()}")
                 self.renderer.render(self.client_gs)
-                print(f"advance render __ {(datetime.now() - curr_time).total_seconds()}")
+                # print(f"advance render __ {(datetime.now() - curr_time).total_seconds()}")
             except Exception as e:
                 print(f"Error: {e}")
                 break

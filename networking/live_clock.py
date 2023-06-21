@@ -8,7 +8,7 @@ class LiveClock:
 
     def tick(self, refresh_rate: int) -> float:
         next_tick = self._last_tick + timedelta(seconds=1 / refresh_rate)
-        print(f"last tick: {self._last_tick.time()}, now: {datetime.now().time()} next tick: {next_tick.time()}")
+        #  print(f"last tick: {self._last_tick.time()}, now: {datetime.now().time()} next tick: {next_tick.time()}")
         overtime = (next_tick - datetime.now()).total_seconds()
 
         if overtime > 0:
