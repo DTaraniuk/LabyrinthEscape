@@ -10,7 +10,6 @@ from common import constants, helper
 class Renderer:
     def __init__(self, win: pygame.Surface, player_name: str):
         surface_manager = SurfaceManager(win)
-        surface_manager.init_surfaces()
         self._player_name: str = player_name
         self._surface_manager: SurfaceManager = surface_manager
         self._image_storage = ImageStorage()

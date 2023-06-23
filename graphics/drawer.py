@@ -50,3 +50,9 @@ def draw_player(player: Player, image: pygame.Surface, pgs: pygame.Surface):
     text_pos = player.get_pos().x, player.get_pos().y + image.get_height()
     pgs.blit(text, text_pos)
 
+
+def draw_grid(grid_surface: pygame.Surface, color: tuple[int, int, int]):
+    cell_width = constants.WIDTH / constants.ROWS
+    for i in range(constants.ROWS):
+        pygame.draw.line(grid_surface, color, (0, i * cell_width), (constants.WIDTH, i * cell_width))
+        pygame.draw.line(grid_surface, color, (i * cell_width, 0), (i * cell_width, constants.WIDTH))

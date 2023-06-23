@@ -12,7 +12,7 @@ class Cell:
         self._neighbors: dict[str, 'Cell'] = {}
         self.total_rows = total_rows
         self._color: Tuple[int, int, int] = WHITE
-        self._is_updated = False
+        self.is_updated = False
 
     def __lt__(self, other):
         return self.index_in_row + self.index_in_col < other.index_in_row + other.index_in_col
@@ -40,19 +40,17 @@ class Cell:
             self._neighbors[dir_.name] = other
             other._neighbors[dir_.opposite().name] = self
 
-    @property
-    def is_updated(self):
-        return self._is_updated
-
-    @is_updated.setter
-    def is_updated(self, value):
-        self._is_updated = value
-
     def get_index(self) -> Tuple[int, int]:
         return self.index_in_row, self.index_in_col
 
     def get_pos(self) -> CoordPair:
         return CoordPair(self.index_in_row * self.width, self.index_in_col * self.width)
+
+    def get_x(self):
+        return self.index_in_row * self.width
+
+    def get_y(self):
+        return self.index_in_col * self.width
 
     def get_distance(self, other: 'Cell') -> CoordPair:
         return CoordPair(other.index_in_row-self.index_in_row, other.index_in_col-self.index_in_col)

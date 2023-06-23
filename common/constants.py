@@ -43,7 +43,7 @@ KILL_DIST = WIDTH/ROWS/3
 
 # region graphics
 
-PLAYER_NAME_FONT = pygame.font.Font(None, 24)  # Parameters are 'None' or a filename, and a size (in points)
+PLAYER_NAME_FONT = pygame.font.Font(None, 18)  # Parameters are 'None' or a filename, and a size (in points)
 # endregion
 
 # region network signals

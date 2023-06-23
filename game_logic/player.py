@@ -32,6 +32,12 @@ class Player:
     def get_pos(self) -> CoordPair:
         return CoordPair(self._x, self._y)
 
+    def get_x(self):
+        return self._x
+
+    def get_y(self):
+        return self._y
+
     def center(self, x, y):
         size_x, size_y = self.size
         self._x = x - size_x / 2

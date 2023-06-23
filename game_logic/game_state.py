@@ -124,8 +124,6 @@ class GameState:
                     target_x = curr_x + current_cell.width - 1
                 else:  # moving left
                     target_x = curr_x
-            else:
-                target_x_cell.is_updated = False
 
         if current_cell != target_y_cell:
             if not current_cell.is_neighbor(target_y_cell):
@@ -133,8 +131,6 @@ class GameState:
                     target_y = curr_y + current_cell.width - 1
                 else:  # moving up
                     target_y = curr_y
-            else:
-                target_y_cell.is_updated = False
 
         player.center(target_x, target_y)
 
