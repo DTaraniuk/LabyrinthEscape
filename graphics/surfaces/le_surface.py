@@ -1,15 +1,26 @@
-from typing import Union, Optional
 import pygame
+import enum
+from typing import Union, Optional
 from .surface_update_data import SurfaceUpdateData
 from abc import ABC, abstractmethod
 from common import constants
 from game_logic import CoordPair
 
 
+class SurfaceType(enum.Enum):
+    MAIN = 'main'
+    MAZE = 'maze'
+    GRID = 'grid'
+    PATH = 'path'
+    TEXT = 'text'
+    PLAY = 'play'
+    OPAQ = 'opaque'
+
+
 class LeSurface(ABC):
-    def __init__(self, surface: pygame.Surface):
+    def __init__(self, surface: pygame.Surface, is_rendered=False):
         self._type = None
-        self.is_rendered = False
+        self.is_rendered = is_rendered
         self._surface: pygame.Surface = surface
 
     @abstractmethod

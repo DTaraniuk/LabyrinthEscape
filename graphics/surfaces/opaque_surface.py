@@ -1,11 +1,9 @@
-from le_surface import*
-from surface_update_data import SurfaceUpdateData
-from ..surface_manager import SurfaceType
+from .le_surface import*
 
 
 class OpaqueSurface(LeSurface):
-    def __init__(self, surface: pygame.Surface):
-        super().__init__(surface)
+    def __init__(self, surface: pygame.Surface, is_rendered=False):
+        super().__init__(surface, is_rendered)
         self._type = SurfaceType.OPAQ
 
     def update(self, upd_data: SurfaceUpdateData):

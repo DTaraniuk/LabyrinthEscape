@@ -5,6 +5,7 @@ from .surface_manager import SurfaceManager, SurfaceType
 from pygame import Rect
 from game_logic import GameState
 from common import constants, helper
+from .surfaces import *
 
 
 class Renderer:
@@ -16,9 +17,18 @@ class Renderer:
         self._show_grid: bool = False
 
     def update_surfaces(self, gs: GameState):
-        self._surface_manager.update_maze_surface(gs.maze)
+        upd_data = SurfaceUpdateData()
+        player_vision = gs.get_player_vision(gs.players[self._player_name])
+        cells_to_update = set(c for c in player_vision)
+        for c in player_vision:
+            cells_to_update.update(c.get_neighbors().values())
+
+        upd_data.cells_to_update = cells_to_update
         players_with_images = [(player, self._image_storage.get_or_add(player)) for player in gs.players.values()]
-        self._surface_manager.update_play_surface(players_with_images)
+        upd_data.players_with_images = players_with_images
+
+        self._surface_manager.update_surface(upd_data, SurfaceType.MAZE)
+        self._surface_manager.update_surface(upd_data, SurfaceType.PLAY)
 
     def render(self, gs: GameState):
         self.update_surfaces(gs)
@@ -32,15 +42,17 @@ class Renderer:
         self._surface_manager.render(rect_list=rect_list)
 
     def user_message(self, text: str, font_size: int):
-        font_ = pygame.font.Font(None, font_size)
-        self._surface_manager.update_opaque_surface(0.5)
-        self._surface_manager.update_text_surface(text, font_)
-        self._surface_manager.show_surface(SurfaceType.OPAQ)
-        self._surface_manager.show_surface(SurfaceType.TEXT)
+        upd_data = SurfaceUpdateData()
+        surfaces = [SurfaceType.TEXT, SurfaceType.OPAQ]
+
+        upd_data.font = pygame.font.Font(None, font_size)
+        upd_data.text = text
+        upd_data.opacity = 0.5
+        self._surface_manager.update_surfaces(upd_data, surfaces)
+        self._surface_manager.show_surfaces(surfaces)
         self._surface_manager.render()
         helper.wait_for_input()
-        self._surface_manager.hide_surface(SurfaceType.OPAQ)
-        self._surface_manager.hide_surface(SurfaceType.TEXT)
+        self._surface_manager.hide_surfaces(surfaces)
         self._surface_manager.render()
 
     def toggle_grid(self):

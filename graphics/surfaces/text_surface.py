@@ -1,12 +1,10 @@
-from le_surface import*
-from surface_update_data import SurfaceUpdateData
+from .le_surface import*
 from common.helper import create_text_frame
-from ..surface_manager import SurfaceType
 
 
 class TextSurface(LeSurface):
-    def __init__(self, surface: pygame.Surface):
-        super().__init__(surface)
+    def __init__(self, surface: pygame.Surface, is_rendered):
+        super().__init__(surface, is_rendered)
         self._type = SurfaceType.TEXT
 
     def update(self, upd_data: SurfaceUpdateData):

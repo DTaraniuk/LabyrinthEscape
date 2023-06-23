@@ -90,11 +90,12 @@ class GameState:
             if player == self.minotaur or player.state != PlayerState.ALIVE:
                 continue
             player_cell = self.maze.get_cell(player.get_center())
+            mino_cell = self.maze.get_cell(self.minotaur.get_center())
 
             dist = player.get_center() - self.minotaur.get_center()
             abs_dist = math.sqrt(abs(dist.x)**2 + abs(dist.y)**2)
-            player_dead = abs_dist < constants.KILL_DIST
-            if player_dead:
+            is_player_dead = abs_dist < constants.KILL_DIST and player_cell == mino_cell
+            if is_player_dead:
                 self.kill_player(player)
                 res[player.name] = PlayerState.DEAD
 

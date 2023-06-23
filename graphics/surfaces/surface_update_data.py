@@ -3,7 +3,8 @@ from game_logic import Cell, Player
 
 
 class SurfaceUpdateData:
-    def __init__(self, cells_to_update: list[Cell] = None,
+    def __init__(self,
+                 cells_to_update: list[Cell] = None,
                  path: list[Cell] = None,
                  path_color: tuple[int, int, int] = None,
                  text: str = None,

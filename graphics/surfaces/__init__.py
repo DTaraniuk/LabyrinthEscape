@@ -1,4 +1,4 @@
-from .le_surface import LeSurface
+from .le_surface import LeSurface, SurfaceType
 from .surface_update_data import SurfaceUpdateData
 from .main_surface import MainSurface
 from .maze_surface import MazeSurface
