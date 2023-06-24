@@ -105,7 +105,7 @@ class Maze:
         index: tuple[int, int] = int(coords.x // self.cell_width), int(coords.y // self.cell_width)
         return self[index]
 
-    def get_random_edge_cell(self):
+    def get_random_edge_cell(self) -> Cell:
         edge_length = self.row_num
         edge_choice = random.choice(["top", "bottom", "left", "right"])
 

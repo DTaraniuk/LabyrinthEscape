@@ -1,6 +1,6 @@
 from common.constants import*
 from pygame import Surface as pgs
-from game_logic import Maze, CoordPair, Player, Minotaur, GameState, pathfinding, PlayerState
+from game_logic import Maze, CoordPair, LePlayer, LeMinotaur, GameState, pathfinding, PlayerState
 from common import helper
 from graphics import Renderer
 
@@ -16,12 +16,12 @@ def main(win: pgs) -> None:
     center = (ROWS // 2 + 0.5) * maze.cell_width
     player_start = CoordPair(center, center)
     player_name = 'Main-Kun'
-    player = Player(player_start, (maze.cell_width/2, maze.cell_width/2), player_name)
-    player_renderer = Renderer(win, player_name)  # 1 is the player index, 0 for minotaur
+    player = LePlayer(player_start, (maze.cell_width/2, maze.cell_width/2), player_name)
+    player_renderer = Renderer(win, player_name)
 
     mino_start = maze.get_random_edge_cell().get_pos()
 
-    minotaur = Minotaur(mino_start, (maze.cell_width, maze.cell_width))
+    minotaur = LeMinotaur(mino_start, (maze.cell_width, maze.cell_width))
 
     clock = pygame.time.Clock()
 

@@ -65,8 +65,6 @@ class Renderer:
 
     def refresh(self, gs: GameState):
         gs.maze.request_full_update()
-        self._surface_manager.update_maze_surface(gs.maze)
-        self._surface_manager.clear_surface(SurfaceType.PLAY)
 
     def render_path(self, pathfinding_res, path_color):
         self._surface_manager.update_path_surface(pathfinding_res.path, path_color)

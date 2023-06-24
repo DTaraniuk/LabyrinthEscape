@@ -3,7 +3,7 @@ import socket
 import threading
 import time
 from common import constants, helper
-from game_logic import Player, GameState, Maze, Minotaur, CoordPair
+from game_logic import LePlayer, GameState, Maze, LeMinotaur, CoordPair
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 from sock_message import SockMessage, MsgType
@@ -94,11 +94,11 @@ class GameServer:
             player_id = len(self.player_keys)
             if player_id == 0:  # minotaur
                 mino_start = self.maze.get_random_edge_cell().get_pos()
-                player = Minotaur(mino_start, (self.maze.cell_width, self.maze.cell_width), is_player_controlled=True)
+                player = LeMinotaur(mino_start, (self.maze.cell_width, self.maze.cell_width), is_player_controlled=True)
             else:
                 center = (constants.ROWS // 2 + 0.5) * self.maze.cell_width
                 player_start = CoordPair(center, center)
-                player = Player(player_start, (self.maze.cell_width / 2, self.maze.cell_width / 2),
+                player = LePlayer(player_start, (self.maze.cell_width / 2, self.maze.cell_width / 2),
                                 name=f"Player{player_id}")
             self.gs.add_player(player)
 

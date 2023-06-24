@@ -1,6 +1,6 @@
 import pygame
 from common import constants
-from game_logic import Player
+from game_logic import LePlayer
 
 
 class ImageStorage:
@@ -15,7 +15,7 @@ class ImageStorage:
             self.images[image_name] = scaled_image
         return self.images[image_name]
 
-    def get_or_add(self, player: Player) -> pygame.Surface:
+    def get_or_add(self, player: LePlayer) -> pygame.Surface:
         image_name = player.get_image()
         if image_name:
             result_image = self._load_image(image_name, player.size)

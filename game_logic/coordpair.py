@@ -29,3 +29,6 @@ class CoordPair:
 
     def equals(self, other: 'CoordPair') -> bool:
         return (self.x, self.y) == (other.x, other.y)
+
+    def clone(self):
+        return CoordPair(self.x, self.y)

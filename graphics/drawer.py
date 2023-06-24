@@ -1,5 +1,5 @@
 import pygame
-from game_logic import Cell, Player, PlayerState
+from game_logic import Cell, LePlayer
 from common import constants
 
 
@@ -37,9 +37,9 @@ def draw_cell(cell: Cell, pgs: pygame.Surface) -> None:
     cell.is_updated = True
 
 
-def draw_player(player: Player, image: pygame.Surface, pgs: pygame.Surface):
+def draw_player(player: LePlayer, image: pygame.Surface, pgs: pygame.Surface):
     # Blit the player image
-    pgs.blit(image, player.get_pos().to_tuple())
+    pgs.blit(image, player.pos.to_tuple())
 
     # Render the text. "True" means anti-aliased text.
     # (The last parameter is color.)
@@ -47,7 +47,7 @@ def draw_player(player: Player, image: pygame.Surface, pgs: pygame.Surface):
 
     # Blit the text surface onto the pgs surface.
     # We need to decide where to blit - Let's put it just below the player image.
-    text_pos = player.get_pos().x, player.get_pos().y + image.get_height()
+    text_pos = player.pos.x, player.pos.y + image.get_height()
     pgs.blit(text, text_pos)
 
 

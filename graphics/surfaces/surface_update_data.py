@@ -1,5 +1,5 @@
 import pygame
-from game_logic import Cell, Player
+from game_logic import Cell, LePlayer
 
 
 class SurfaceUpdateData:
@@ -9,7 +9,7 @@ class SurfaceUpdateData:
                  path_color: tuple[int, int, int] = None,
                  text: str = None,
                  font: pygame.font.Font = None,
-                 players_with_images: list[tuple[Player, pygame.Surface]] = None,
+                 players_with_images: list[tuple[LePlayer, pygame.Surface]] = None,
                  opacity: float = None,
                  shade_color: tuple[int, int, int] = None):
         # maze
