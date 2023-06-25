@@ -4,7 +4,7 @@ from game_logic.direction import *
 from game_logic.pathfinding import PathfindingRes, astar
 from game_logic.maze import Maze
 from game_logic.player.modifier.le_modifier import LeModifierType
-from game_logic.player.modifier.le__acceleration_modifier import LeAccelerationModifier
+from game_logic.player.modifier.le_mino_acceleration_modifier import LeMinoAccelerationModifier
 from common.constants import *
 
 
@@ -31,8 +31,17 @@ class LeMinotaur(LePlayer):
             self.move_direction = get_move_direction(self.center, path[1].get_center())
 
     def move(self, ticks: int) -> CoordPair:
-        vec = super(LeMinotaur, self).move(ticks)
+        vec = super().move(ticks)
         # acceleration
-        accel_mod = LeAccelerationModifier(self.speed*1e-3, LeModifierType.Speed, self.move_direction.clone())
+        accel_mod = LeMinoAccelerationModifier(self.speed * 1e-2, LeModifierType.Speed, self.move_direction.clone())
         self._modifiers[LeModifierType.Speed].append(accel_mod)
         return vec
+
+    def update_modifiers(self, ticks: int):
+        # remove acceleration after direction change
+        for spd_mod in self._modifiers[LeModifierType.Speed]:
+            if not isinstance(spd_mod, LeMinoAccelerationModifier):
+                continue
+            if spd_mod.move_dir != self.move_direction:
+                spd_mod.is_active = False
+        super().update_modifiers(ticks)

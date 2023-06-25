@@ -5,7 +5,7 @@ from common.constants import FPS
 acceleration_buff_duration = FPS*20
 
 
-class LeAccelerationModifier(LeModifier):
+class LeMinoAccelerationModifier(LeModifier):
     def __init__(self, increase: float, mod_type: LeModifierType, direction: CoordPair):
         super().__init__(acceleration_buff_duration, mod_type)
         self.increase: float = increase

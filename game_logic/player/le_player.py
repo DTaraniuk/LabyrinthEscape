@@ -2,8 +2,8 @@ from common.constants import *
 from game_logic.coordpair import CoordPair
 from enum import Enum
 from game_logic.player.modifier.le_modifier import LeModifier, LeModifierType
-from game_logic.player.modifier.le__acceleration_modifier import LeAccelerationModifier
-from typing import Union
+from game_logic.player.modifier.le_mino_acceleration_modifier import LeMinoAccelerationModifier
+from typing import Union, Iterable
 
 
 class PlayerState(Enum):
@@ -70,7 +70,7 @@ class LePlayer:
         speed_mods: list[LeModifier] = self._modifiers.get(LeModifierType.Speed)
         dest = CoordPair(x, y)
         for speed_mod in speed_mods:
-            if isinstance(speed_mod, LeAccelerationModifier) and speed_mod.is_active:
+            if isinstance(speed_mod, LeMinoAccelerationModifier) and speed_mod.is_active:
                 dest += speed_mod.move_dir * speed_mod.increase
 
         dest += CoordPair(dx * speed * ticks, dy * speed * ticks)
@@ -79,9 +79,19 @@ class LePlayer:
     def add_modifier(self, modifier: LeModifier):
         self._modifiers[modifier.type].append(modifier)
 
+    def add_modifiers(self, modifiers: Iterable[LeModifier]):
+        for modifier in modifiers:
+            self.add_modifier(modifier)
+
+    def get_modifiers(self) -> list[LeModifier]:
+        modifiers: list[LeModifier] = []
+        for mod_list in self._modifiers.values():
+            modifiers.extend(mod_list)
+        return modifiers
+
     def update_modifiers(self, ticks: int):
         for mod_list in self._modifiers.values():
             for mod in mod_list:
+                mod.update(ticks)
                 if not mod.is_active:
                     mod_list.remove(mod)
-                mod.update(ticks)

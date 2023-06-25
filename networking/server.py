@@ -24,7 +24,8 @@ class GameServer:
 
         self.maze = Maze(constants.ROWS, constants.WIDTH)
         self.maze.generate_labyrinth()
-        self.gs = GameState(self.maze)
+        self.gs = GameState(self.maze, write_changes=True)
+        self.gs_lock: threading.Lock = threading.Lock()
 
         self.connecting = True
         self.running = False
@@ -44,7 +45,8 @@ class GameServer:
                 player = self.gs.players[name]
                 if conn and player:
                     move_direction = helper.recv_message(conn)
-                    player.move_direction = move_direction
+                    with self.gs_lock:
+                        player.move_direction = move_direction
                     msg = SockMessage(MsgType.MOVE, (name, move_direction, self.gs.step))
                     self.broadcast_message(msg)
                 else:
@@ -72,8 +74,10 @@ class GameServer:
         clock = LiveClock()
         while self.running:
             # curr_time = datetime.now()
-            change = self.gs.advance_timeline(1)
+            with self.gs_lock:
+                self.gs.advance_timeline(1)
             # print(f"server advance on time {self.gs.time}")
+            change = self.gs.get_aggregated_changes()
 
             if self.gs.step % GSC_CHANGE_RATE == 0:
                 msg = SockMessage(MsgType.GSC, change)

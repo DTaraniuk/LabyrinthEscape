@@ -1,7 +1,9 @@
 import math
+
 from common import constants
 from .player import LePlayer, PlayerState
-from game_logic.player.le_minotaur import LeMinotaur
+from .player.le_minotaur import LeMinotaur
+from .player.modifier.le_modifier import LeModifier
 from .maze import Maze
 from .cell import Cell
 from .direction import *
@@ -22,15 +24,18 @@ class GameStateChange:
         self.player_positions: dict[str, CoordPair] = {}
         self.player_directions: dict[str, CoordPair] = {}
         self.player_states: dict[str, PlayerState] = {}
+        self.player_modifiers: dict[str, list[LeModifier]] = {}
 
 
 class GameState:
-    def __init__(self, maze: Maze):
+    def __init__(self, maze: Maze, write_changes: bool = False):
         self.players: dict[str, LePlayer] = {}
         self.minotaur: LeMinotaur = None
         self.maze = maze
         self._all_player_mem: dict[str, deque[tuple[int, list[Cell]]]] = {}
         self.step: int = 0
+        self.write_changes: bool = write_changes
+        self.changes: list[GameStateChange] = []
 
     def add_player(self, player: LePlayer):  # if there is no minotaur, add as minotaur
         if self.minotaur is None:
@@ -42,7 +47,7 @@ class GameState:
         self.players[player.name] = player
         self._all_player_mem[player.name] = deque()
 
-    def advance_timeline(self, ticks) -> GameStateChange:
+    def advance_timeline(self, ticks):
         self.step += ticks
         change = GameStateChange(self.step)
         if self.minotaur:
@@ -51,16 +56,19 @@ class GameState:
             if player.state == PlayerState.DEAD:
                 continue
 
+            old_modifiers = player.get_modifiers()
             self._move_player(player, ticks)
             change.player_positions[player.name] = player.pos
             change.player_directions[player.name] = player.move_direction
             self._update_player_vision(player)
-            player.update_modifiers(ticks)
+            new_modifiers = player.get_modifiers()
+            change.player_modifiers[player.name] = list([m for m in new_modifiers if m not in old_modifiers])
         state_update = self.check_win_lose()
         for name, state in state_update.items():
             change.player_states[name] = state
 
-        return change
+        if self.write_changes:
+            self.changes.append(change)
 
     def get_player_vision(self, player: LePlayer) -> set[Cell]:
         # minotaur has allvision
@@ -110,6 +118,7 @@ class GameState:
         self._all_player_mem[player.name].clear()
 
     def _move_player(self, player: LePlayer, ticks: int):
+        player.update_modifiers(ticks)
         move_vector = player.move(ticks)
         target_x = max(1, min(self.maze.width - 1, move_vector.x))
         target_y = max(1, min(self.maze.width - 1, move_vector.y))
@@ -151,6 +160,22 @@ class GameState:
             player.state = PlayerState.ALIVE
             player.pos = player_start
 
+    def get_aggregated_changes(self) -> GameStateChange:
+        if not self.write_changes:
+            raise Exception("Attempted to get changes when they are not recorded.")
+        bulk_change = GameStateChange(self.step)
+        for single_change in self.changes:
+            bulk_change.player_positions.update(single_change.player_positions)
+            bulk_change.player_directions.update(single_change.player_directions)
+            bulk_change.player_states.update(single_change.player_states)
+            for player, modifiers in single_change.player_modifiers.items():
+                if player not in bulk_change.player_modifiers:
+                    bulk_change.player_modifiers[player] = modifiers.copy()
+                else:
+                    bulk_change.player_modifiers[player].extend(modifiers)
+        self.changes.clear()
+        return bulk_change
+
     def apply_change(self, change: GameStateChange):
         self.step = change.step
         for name, player in self.players.items():
@@ -161,6 +186,8 @@ class GameState:
                 player.pos = change.player_positions[player.name]
             if name in change.player_directions:
                 player.move_direction = change.player_directions[player.name]
+            if name in change.player_modifiers:
+                player.add_modifiers(change.player_modifiers[name])
 
             self._update_player_vision(player)
 
