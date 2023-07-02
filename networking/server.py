@@ -136,8 +136,8 @@ class GameServer:
 
         if player_id == 0:  # minotaur
             mino_start = self.maze.get_random_edge_cell().get_pos()
-            player = LeMinotaur(mino_start,
-                                (self.maze.cell_width, self.maze.cell_width),
+            player = LeMinotaur(pos=mino_start,
+                                size=(self.maze.cell_width, self.maze.cell_width),
                                 is_player_controlled=True,
                                 name=player_name)
         else:

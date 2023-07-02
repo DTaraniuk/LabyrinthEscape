@@ -25,7 +25,7 @@ class LeMinotaur(LePlayer):
         curr_cell = maze.get_cell(self.center)
         player_cell = maze.get_cell(self.chased_player.center)
         path: PathfindingRes = astar(curr_cell, player_cell)
-        if path.path.__len__() == 1:
+        if len(path.path) == 1:
             self.move_direction = get_move_direction(self.center, self.chased_player.center)
         else:
             self.move_direction = get_move_direction(self.center, path[1].get_center())

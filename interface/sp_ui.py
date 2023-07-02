@@ -19,7 +19,9 @@ class SinglePlayerUi(Ui):
 
         mino_start = maze.get_random_edge_cell().get_pos()
         mino_name = 'Billy'
-        minotaur = LeMinotaur(mino_start, (maze.cell_width, maze.cell_width), mino_name)
+        minotaur = LeMinotaur(pos=mino_start,
+                              size=(maze.cell_width, maze.cell_width),
+                              name=mino_name)
 
         self.gs = GameState(maze)
         self.gs.add_player(minotaur)
