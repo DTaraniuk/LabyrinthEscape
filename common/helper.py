@@ -1,7 +1,4 @@
 from typing import Callable
-import struct
-import pygame
-import pickle
 import math
 from .constants import *
 from game_logic import Maze, CoordPair, Cell, PathfindingRes
@@ -56,35 +53,6 @@ def input_movement() -> CoordPair:
     if keys[pygame.K_RIGHT]:
         player_move_vector += CoordPair(1, 0)
     return player_move_vector
-
-
-def send_message(sock, message):
-    # Prefix each message with a 4-byte length (network byte order)
-    data = pickle.dumps(message)
-    message_length = len(data)
-    sock.sendall(struct.pack('>I', message_length) + data)
-
-
-def recv_message(sock):
-    # Read message length and unpack it into an integer
-    raw_message_length = recv_all(sock, 4)
-    if not raw_message_length:
-        return None
-    message_length = struct.unpack('>I', raw_message_length)[0]
-    # Read the message data
-    data = recv_all(sock, message_length)
-    return pickle.loads(data)
-
-
-def recv_all(sock, length):
-    # Helper function to recv n bytes or return None if EOF is hit
-    data = bytearray()
-    while len(data) < length:
-        packet = sock.recv(length - len(data))
-        if not packet:
-            return None
-        data.extend(packet)
-    return data
 
 
 def obj_dict(obj):

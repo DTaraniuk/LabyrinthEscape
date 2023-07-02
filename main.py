@@ -1,19 +1,22 @@
-from common.constants import*
+import pygame
+from common import constants
 from pygame import Surface as pgs
 from game_logic import Maze, CoordPair, LePlayer, LeMinotaur, GameState, pathfinding, PlayerState
 from common import helper
+from app import LeApp
+from interface import MenuUi, RunMode, SinglePlayerUi, LobbyUi
 from graphics import Renderer
 
-WIN = pygame.display.set_mode((WIDTH, WIDTH))
+WIN = pygame.display.set_mode((constants.WIDTH, constants.HEIGHT))
 pygame.display.set_caption("Labyrinth Escape")
 
 
 def main(win: pgs) -> None:
 
-    maze = Maze(ROWS, WIDTH)
+    maze = Maze(constants.ROWS, constants.WIDTH)
     maze.generate_labyrinth()
 
-    center = (ROWS // 2 + 0.5) * maze.cell_width
+    center = (constants.ROWS // 2 + 0.5) * maze.cell_width
     player_start = CoordPair(center, center)
     player_name = 'Main-Kun'
     player = LePlayer(player_start, (maze.cell_width/2, maze.cell_width/2), player_name)
@@ -30,7 +33,7 @@ def main(win: pgs) -> None:
     gs.add_player(player)
 
     run = True
-    player_renderer.user_message("Privet. Click to start", FONT_SIZE)
+    player_renderer.user_message("Privet. Click to start", constants.FONT_SIZE)
     while run:
         for event_ in pygame.event.get():
             if event_.type == pygame.QUIT:
@@ -39,11 +42,11 @@ def main(win: pgs) -> None:
 
             if event_.type == pygame.KEYDOWN:
                 if event_.key == pygame.K_a:
-                    helper.handle_pathfinding_call(player_renderer, maze, pathfinding.astar, RED)
+                    helper.handle_pathfinding_call(player_renderer, maze, pathfinding.astar, constants.RED)
                 elif event_.key == pygame.K_d:
-                    helper.handle_pathfinding_call(player_renderer, maze, pathfinding.dfs_path, BLUE)
+                    helper.handle_pathfinding_call(player_renderer, maze, pathfinding.dfs_path, constants.BLUE)
                 elif event_.key == pygame.K_b:
-                    helper.handle_pathfinding_call(player_renderer, maze, pathfinding.bfs_path, GREEN)
+                    helper.handle_pathfinding_call(player_renderer, maze, pathfinding.bfs_path, constants.GREEN)
                 elif event_.key == pygame.K_SPACE:
                     # maze.process_cells(lambda cell: setattr(cell, 'color', WHITE))
                     player_renderer.refresh(gs)
@@ -59,17 +62,22 @@ def main(win: pgs) -> None:
         gs.advance_timeline(1)
 
         if player.state == PlayerState.ESCAPED:
-            player_renderer.user_message(f"You have escaped", FONT_SIZE)
+            player_renderer.user_message(f"You have escaped", constants.FONT_SIZE)
             maze.randomize_victory_cell()
             player_renderer.refresh(gs)
         elif player.state == PlayerState.DEAD:
-            player_renderer.user_message(f"You have been slain by the minotaur", FONT_SIZE)
+            player_renderer.user_message(f"You have been slain by the minotaur", constants.FONT_SIZE)
             gs.reset()
 
-        clock.tick(FPS)
+        clock.tick(constants.FPS)
         player_renderer.render(gs)
 
     pygame.quit()
 
 
-main(WIN)
+app = LeApp(WIN)
+app.add_ui(MenuUi(), RunMode.Menu)
+app.add_ui(SinglePlayerUi(), RunMode.SinglePlayer)
+app.add_ui(LobbyUi(), RunMode.MpLobby)
+
+app.run()

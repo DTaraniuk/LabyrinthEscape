@@ -50,8 +50,6 @@ class SurfaceManager:
                 dest = (0, 0)
                 self._main_surface.blit(surface, dest)
 
-        pygame.display.flip()
-
     def update_surface(self, upd_data: SurfaceUpdateData, surface_type: SurfaceType):
         surface = self._surfaces.get(surface_type)
         if surface:

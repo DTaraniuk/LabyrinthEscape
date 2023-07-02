@@ -1,4 +1,5 @@
 import pygame
+from graphics import SurfaceType
 
 pygame.init()
 pygame.display.set_mode((800, 600))
@@ -14,3 +15,7 @@ text_surface = font.render(text, True, (255, 255, 255))
 width, height = text_surface.get_size()
 
 print(f"Text surface width: {width}, height: {height}")
+
+d = list(SurfaceType)
+
+a = 1

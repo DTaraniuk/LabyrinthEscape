@@ -1,2 +1,19 @@
-rework labyrinth generation to eliminate tree-like structures with 0 chance of winning
-DISTANT limit player vision and change game logic and graphics accordingly - partially
+[essential]
+    fix game restart in single
+
+    rework client-server communication:
+    send updates less frequently, instead use client-side prediction
+    maybe done
+
+    rework labyrinth generation to eliminate tree-like structures with 0 chance of winning
+    partially done
+
+    limit player vision and change game logic and graphics accordingly
+    partially done - simple level
+
+    fix player backwards move - probably impossible
+
+    optimize!!!!!
+[optional]
+    make a UI for multiplayer
+    not started

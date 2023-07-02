@@ -6,26 +6,29 @@ from common import constants, helper
 from game_logic import LePlayer, GameState, Maze, LeMinotaur, CoordPair
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
-from sock_message import SockMessage, MsgType
-from network_constants import *
+from .sock_message import SockMessage, MsgType, send_sock_msg, recv_sock_msg, send_message
+from .network_constants import *
 from datetime import datetime
-from live_clock import LiveClock
+from .live_clock import LiveClock
+from typing import Callable, Any
 
 
 class GameServer:
     def __init__(self, host='localhost', port=7777):
-        self.player_input_threads: dict[str, threading.Thread] = {}
+        self.client_listen_threads: dict[str, threading.Thread] = {}
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((host, port))
         self.server.listen(2)
-        self.players: list[str] = []
         self.clients: dict[str, socket.socket] = {}
-        self.player_keys: list[str] = []
+        self.player_names: list[str] = []
 
         self.maze = Maze(constants.ROWS, constants.WIDTH)
         self.maze.generate_labyrinth()
         self.gs = GameState(self.maze, write_changes=True)
         self.gs_lock: threading.Lock = threading.Lock()
+        self.broadcast_advance_thread: threading.Thread = Thread(target=self.advance_and_broadcast, daemon=True)
+
+        self.player_ready_map: dict[str, bool] = {}
 
         self.connecting = True
         self.running = False
@@ -33,42 +36,65 @@ class GameServer:
     def listen_for_start_command(self):
         while True:
             start_command = input("Enter 'start' to begin the game: ")
-            if start_command.lower() == "start":
-                self.connecting = False
-                self.running = True
-                break
+            if start_command.lower() != 'start':
+                continue
 
-    def input_movement(self, name: str):
-        while self.running:
-            try:
-                conn = self.clients[name]
-                player = self.gs.players[name]
-                if conn and player:
-                    move_direction = helper.recv_message(conn)
-                    with self.gs_lock:
-                        player.move_direction = move_direction
-                    msg = SockMessage(MsgType.MOVE, (name, move_direction, self.gs.step))
-                    self.broadcast_message(msg)
-                else:
-                    print(f"WARN: Failed to input movement for player {name} on time {self.gs.step}.")
+            if not all(self.player_ready_map.values()):
+                print('Not all players are ready')
+                continue
+
+            self.connecting = False
+            self.running = True
+            break
+
+    def listen_to_client(self, name: str):
+        conn = self.clients.get(name)
+        if not conn:
+            print(f'Failed to get conn for player {name}.')
+            return
+
+        msg_action_map: dict[MsgType, Callable[[str, SockMessage], None]] = {
+            MsgType.RDY: self.update_player_ready_map,
+            MsgType.MOVE: self.update_player_movement
+        }
+        while self.running or self.connecting:
+            try:  # TODO implement new listening
+                msg = recv_sock_msg(conn)
+                if not msg:
+                    continue
+
+                msg_action_map[msg.msg_type](name, msg)
             except Exception as e:
-                print(f"ERR: Error {e} occurred during movement input for player {name}. Removing")
-                self.player_keys.remove(name)
+                print(f"ERR: Error {e} occurred while listening to player {name} on time {self.gs.step}. Removing")
+                self.player_names.remove(name)
                 return
+
+    def update_player_ready_map(self, name: str, msg: SockMessage) -> None:
+        self.player_ready_map.update({name: not self.player_ready_map[name]})
+
+    def update_player_movement(self, name: str, msg: SockMessage):
+        player = self.gs.players.get(name)
+        move_direction = msg.msg_content
+        if not player:
+            print(f'Failed to get player {name}.')
+        with self.gs_lock:
+            player.move_direction = move_direction
+        msg = SockMessage(MsgType.MOVE, (name, move_direction, self.gs.step))
+        self.broadcast_message(msg)
 
     def broadcast_message(self, msg: SockMessage):
         with ThreadPoolExecutor() as executor:
-            for name in self.player_keys:
+            for name in self.player_names:
                 executor.submit(self.send_message_to_client, name, msg)
 
     def send_message_to_client(self, name, msg: SockMessage):
         try:
             conn = self.clients[name]
             if conn:
-                helper.send_message(conn, msg)
+                send_message(conn, msg)
         except Exception as e:
             print(f"ERR: Error {e} occurred during broadcast to player {name}. Removing")
-            self.player_keys.remove(name)
+            self.player_names.remove(name)
 
     def advance_and_broadcast(self):
         clock = LiveClock()
@@ -80,7 +106,7 @@ class GameServer:
             change = self.gs.get_aggregated_changes()
 
             if self.gs.step % GSC_CHANGE_RATE == 0:
-                msg = SockMessage(MsgType.GSC, change)
+                msg = SockMessage(MsgType.GS_UPD, change)
                 self.broadcast_message(msg)
                 # print(f"Sent gs update to clients on time {change.step} at {datetime.now().time()}")
 
@@ -90,31 +116,47 @@ class GameServer:
             # print(f"Time after tick : {datetime.now()}")
 
     def listen_for_connections(self):
-        while True:
+        while self.connecting:
             conn, addr = self.server.accept()
-            if not self.connecting:
+            send_sock_msg(conn, MsgType.CONN, None) # confirm connection
+
+            init_msg: SockMessage = recv_sock_msg(conn)
+            if init_msg.msg_type != MsgType.CONN:
+                print(f'Error occurred while connecting')
                 break
+            player_name = init_msg.msg_content
+            self.add_player(player_name, conn, addr)
 
-            player_id = len(self.player_keys)
-            if player_id == 0:  # minotaur
-                mino_start = self.maze.get_random_edge_cell().get_pos()
-                player = LeMinotaur(mino_start, (self.maze.cell_width, self.maze.cell_width), is_player_controlled=True)
-            else:
-                center = (constants.ROWS // 2 + 0.5) * self.maze.cell_width
-                player_start = CoordPair(center, center)
-                player = LePlayer(player_start, (self.maze.cell_width / 2, self.maze.cell_width / 2),
-                                name=f"Player{player_id}")
-            self.gs.add_player(player)
+    def add_player(self, player_name, conn, addr):
+        player_id = len(self.player_names)
+        if player_name in self.player_names:
+            player_name = f'{player_name}_{player_id}'
 
-            # send player name to client
-            helper.send_message(conn, player.name)
-            self.player_keys.append(player.name)
-            self.players.append(player.name)
-            self.clients[player.name] = conn
-            print(f"Player connected: {addr} with id {player_id}")
+        if player_id == 0:  # minotaur
+            mino_start = self.maze.get_random_edge_cell().get_pos()
+            player = LeMinotaur(mino_start,
+                                (self.maze.cell_width, self.maze.cell_width),
+                                is_player_controlled=True,
+                                name=player_name)
+        else:
+            center = (constants.ROWS // 2 + 0.5) * self.maze.cell_width
+            player_start = CoordPair(center, center)
+            player = LePlayer(player_start,
+                              (self.maze.cell_width / 2, self.maze.cell_width / 2),
+                              name=player_name)
+        self.gs.add_player(player)
 
-            thread = Thread(target=self.input_movement, args=(player.name,), daemon=True)
-            self.player_input_threads[player.name] = thread
+        # send player name to clients
+        msg = SockMessage(MsgType.CONN, player_name)
+        self.broadcast_message(msg)
+        self.player_names.append(player.name)
+        self.player_ready_map[player_name] = False
+        self.clients[player.name] = conn
+        print(f"Player connected: {addr} with name {player_name}")
+
+        client_listen_thread = Thread(target=self.listen_to_client, args=(player_name,), daemon=True)
+        self.client_listen_threads[player.name] = client_listen_thread
+        client_listen_thread.start()
 
     def start(self):
         print("Server started, waiting for connections...")
@@ -128,26 +170,16 @@ class GameServer:
         while self.connecting:  # This will just keep the main thread from progressing until 'start' command is given
             time.sleep(0.1)
 
-        print(f"Starting the game with {len(self.player_keys)} players")
-        # Send "start" message to all clients
-        for name in self.player_keys:
-            conn = self.clients[name]
-            if conn:
-                helper.send_message(conn, constants.START)
+        print(f"Starting the game with {len(self.player_names)} players")
+        # send initial game state and start the game
+        self.broadcast_message(SockMessage(MsgType.START, self.gs))
 
-        # Start reading player input and send them initial game state
-        for name, thread in self.player_input_threads.items():
-            helper.send_message(self.clients[name], self.gs)
-            thread.start()
+        # Start a thread that advances the game state and broadcasts it to all clients
+        self.broadcast_advance_thread.start()
 
-        # Start a separate thread that advances the game state and broadcasts it to all clients
-        broadcast_thread = Thread(target=self.advance_and_broadcast, daemon=True)
-        broadcast_thread.start()
-
-
-HAMACHI_IP = input("Enter the HAMACHI IP of the host (Dimas)")
 
 if __name__ == "__main__":
+    HAMACHI_IP = input("Enter the HAMACHI IP of the host (Dimas)")
     server = GameServer(host=HAMACHI_IP)
     try:
         server.start()
