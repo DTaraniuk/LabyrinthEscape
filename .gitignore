@@ -1,8 +1,7 @@
-todo.txt
-
 venv/
 
-
 test.py
+
 todo.txt
+
 *.pyc
