@@ -1,7 +1,6 @@
 import socket
 from threading import Thread, Lock
 from .sock_message import SockMessage, MsgType, recv_sock_msg, send_sock_msg
-from typing import Optional
 
 
 class Client:
