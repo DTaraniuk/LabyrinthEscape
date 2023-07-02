@@ -148,14 +148,16 @@ class GameServer:
                               name=player_name)
         self.gs.add_player(player)
 
-        # send player name to clients
-        msg = SockMessage(MsgType.CONN, player_name)
-        self.player_names.append(player_name)
-        self.player_ready_map[player_name] = False
-        self.clients[player_name] = conn
         # send current players, their ready status and final player name to the client
         welcome_msg = SockMessage(MsgType.LOBBY_INIT, (player_name, self.player_ready_map))
         send_message(conn, welcome_msg)
+
+        # send player name to clients
+        msg = SockMessage(MsgType.CONN, player_name)
+
+        self.player_names.append(player_name)
+        self.clients[player_name] = conn
+        self.player_ready_map[player_name] = False
         self.broadcast_message(msg)
         print(f"Player connected: {addr} with name {player_name}")
 

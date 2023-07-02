@@ -193,5 +193,8 @@ class MpLobbyUi(Ui):
         player_name, player_ready_map = msg.msg_content
         self.player_name = player_name
         self._player_ready_map = player_ready_map
+        for name in player_ready_map:
+            listbox_entry = f'{name}:{self.player_ready_str(name)}'
+            self._player_list_box.add_item(listbox_entry)
 
     # endregion
