@@ -1,5 +1,5 @@
 import pygame
-from game_logic import Cell, LePlayer
+from game_logic import Cell, LePlayer, Direction
 from common import constants
 
 
@@ -10,7 +10,7 @@ def draw_cell(cell: Cell, pgs: pygame.Surface) -> None:
     x, y = cell.index_in_row * width, cell.index_in_col * width
     pygame.draw.rect(pgs, cell.color, (x, y, width, width))
 
-    sides = {'NORTH', 'SOUTH', 'EAST', 'WEST'}
+    sides = list(Direction)
     for direction in cell.get_neighbors().keys():
         if direction in sides:
             sides.remove(direction)
@@ -20,17 +20,17 @@ def draw_cell(cell: Cell, pgs: pygame.Surface) -> None:
         wx2: int = x
         wy1: int = y
         wy2: int = y
-        if direction == 'SOUTH':  # DOWN
+        if direction == Direction.SOUTH:  # DOWN
             wx2 += width - constants.WALL_WIDTH
             wy1 += width - constants.WALL_WIDTH
             wy2 += width - constants.WALL_WIDTH
-        if direction == 'NORTH':  # UP
+        if direction == Direction.NORTH:  # UP
             wx2 += width
-        if direction == 'EAST':  # RIGHT
+        if direction == Direction.EAST:  # RIGHT
             wx1 += width - constants.WALL_WIDTH
             wx2 += width - constants.WALL_WIDTH
             wy2 += width - constants.WALL_WIDTH
-        if direction == 'WEST':  # LEFT
+        if direction == Direction.WEST:  # LEFT
             wy2 += width
         pygame.draw.line(pgs, constants.RED, (wx1, wy1), (wx2, wy2), constants.WALL_WIDTH)
 

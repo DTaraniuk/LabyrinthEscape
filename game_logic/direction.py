@@ -5,10 +5,10 @@ from common.constants import EPS
 
 
 class Direction(Enum):
-    NORTH: CoordPair = CoordPair(0, -1)
-    SOUTH: CoordPair = CoordPair(0, 1)
-    EAST: CoordPair = CoordPair(1, 0)
-    WEST: CoordPair = CoordPair(-1, 0)
+    NORTH = CoordPair(0, -1)
+    SOUTH = CoordPair(0, 1)
+    EAST = CoordPair(1, 0)
+    WEST = CoordPair(-1, 0)
 
     def opposite(self) -> 'Direction':
         if self == Direction.NORTH:

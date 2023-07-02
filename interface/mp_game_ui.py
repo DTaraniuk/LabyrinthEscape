@@ -19,8 +19,8 @@ class MpGameUi(Ui):
 
         self.client: Optional[Client] = None
         self.gs: Optional[GameState] = None
+        self.player_name: Optional[str] = None
 
-        self._player_name: str = ''
         self._renderer: Optional[Renderer] = None
 
     def process_events(self, events: list[pygame.event.Event]):
@@ -31,7 +31,7 @@ class MpGameUi(Ui):
             self.process_server_message(message)
 
         move_direction = helper.input_movement()
-        player = self.gs.players.get(self.client.player_name)
+        player = self.gs.players.get(self.player_name)
         prev_move_direction = player.move_direction
         if move_direction != prev_move_direction:
             self.client.send_message(MsgType.MOVE, move_direction)
@@ -42,8 +42,7 @@ class MpGameUi(Ui):
 
     def render(self, surface: pygame.Surface):
         if not self._renderer:
-            self._renderer = Renderer(surface, self._player_name)
-
+            self._renderer = Renderer(surface, self.player_name)
         self._renderer.render(self.gs)
 
     # region msg actions

@@ -28,7 +28,7 @@ def get_area_rect(pos: int):
                        ELEMENT_HEIGHT)
 
 
-class LobbyUi(Ui):
+class MpLobbyUi(Ui):
     def __init__(self):
         super().__init__()
 
@@ -40,7 +40,8 @@ class LobbyUi(Ui):
         self._msg_action_map: dict[MsgType, Callable[[SockMessage], Any]] = {
             MsgType.CONN: self.update_player_status,
             MsgType.RDY: self.update_player_status,
-            MsgType.START: self.start_game
+            MsgType.START: self.start_game,
+            MsgType.LOBBY_INIT: self.init_lobby
         }
 
         self.hotkeys.update({pygame.K_v: self.paste})
@@ -50,14 +51,16 @@ class LobbyUi(Ui):
                                       color=constants.BLUE,
                                       text=NAME_TB_INIT_TEXT,
                                       text_color=constants.ORANGE,
-                                      active=True)
+                                      active=True,
+                                      clear_init_text_on_select=True)
         self.elements.append(self._name_text_box)
         self._ip_text_box = TextBox(name=IP_TB_NAME,
                                     area=get_area_rect(1),
                                     color=constants.BLUE,
                                     text=IP_TB_INIT_TEXT,
                                     text_color=constants.ORANGE,
-                                    active=True)
+                                    active=True,
+                                    clear_init_text_on_select=True)
         self.elements.append(self._ip_text_box)
         self._connect_btn = Button(name=CONNECT_BUTTON_NAME,
                                    area=get_area_rect(2),
@@ -85,8 +88,9 @@ class LobbyUi(Ui):
         self.elements.append(self._player_list_box)
         # endregion
         self._player_ready_map: dict[str, bool] = {}
-        self.client: Optional[Client] = None
+        self.client: Optional[Client] = Client()
         self.gs: Optional[GameState] = None
+        self.player_name: Optional[str] = None
 
     def process_events(self, events: list[pygame.event.Event]):
         client_messages = self.client.fetch_messages()
@@ -100,8 +104,8 @@ class LobbyUi(Ui):
             self._tb_input = None
             if isinstance(element, TextBox):
                 self._tb_input = element
-                if self._tb_input.text == IP_TB_INIT_TEXT:
-                    self._tb_input.text = ''
+                if element.clear_init_text_on_select:
+                    element.text = ''
             elif isinstance(element, Button):
                 action = self._btn_action_map.get(element.name)
                 if not action:
@@ -143,6 +147,7 @@ class LobbyUi(Ui):
         self._name_text_box.active = False
         self._connect_btn.active = False
         self._player_list_box.active = True
+        self._ready_button.active = True
         self.client.send_message(MsgType.CONN, self._name_text_box.text)
 
     def on_ready_btn_press(self):
@@ -161,14 +166,32 @@ class LobbyUi(Ui):
             self.user_info('Bad response from server on update player status.')
             return
         player_name = msg.msg_content
+
         if msg.msg_type == MsgType.CONN:
             self._player_ready_map[player_name] = False
-        elif msg.msg_type == MsgType.RDY and player_name in self._player_ready_map:
+            listbox_entry = f'{player_name}:{self.player_ready_str(player_name)}'
+            self._player_list_box.add_item(listbox_entry)
+
+        elif msg.msg_type == MsgType.RDY:
             self._player_ready_map[player_name] = not self._player_ready_map[player_name]
+            listbox_entry_index = list(self._player_ready_map.keys()).index(player_name)
+            listbox_entry = f'{player_name}:{self.player_ready_str(player_name)}'
+            self._player_list_box.update_item(listbox_entry, listbox_entry_index)
+
+    def player_ready_str(self, name: str) -> str:
+        if name not in self._player_ready_map:
+            self.user_info('Error in player ready str')
+            return ':('
+        return 'Ready' if self._player_ready_map[name] else 'Not ready'
 
     def start_game(self, msg: SockMessage):
         self.switch_mode = RunMode.MpGame
         # receive initial game state
         self.gs = msg.msg_content
+
+    def init_lobby(self, msg: SockMessage):
+        player_name, player_ready_map = msg.msg_content
+        self.player_name = player_name
+        self._player_ready_map = player_ready_map
 
     # endregion

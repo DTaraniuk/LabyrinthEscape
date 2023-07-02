@@ -9,7 +9,7 @@ class Cell:
         self.index_in_row = row
         self.index_in_col = col
         self.width = width
-        self._neighbors: dict[str, 'Cell'] = {}
+        self._neighbors: dict[Direction, 'Cell'] = {}
         self.total_rows = total_rows
         self._color: Tuple[int, int, int] = WHITE
         self.is_updated = False
@@ -30,15 +30,15 @@ class Cell:
     def is_neighbor(self, other) -> bool:
         return other in self._neighbors.values()
 
-    def get_neighbors(self) -> dict[str, 'Cell']:
+    def get_neighbors(self) -> dict[Direction, 'Cell']:
         return self._neighbors.copy()
 
-    def add_neighbor(self, other: 'Cell', dir_: str = None):
+    def add_neighbor(self, other: 'Cell', dir_: Direction = None):
         if dir_ is None:
             dir_ = get_direction(self.get_distance(other))
         if dir_ is not None:
-            self._neighbors[dir_.name] = other
-            other._neighbors[dir_.opposite().name] = self
+            self._neighbors[dir_] = other
+            other._neighbors[dir_.opposite()] = self
 
     def get_index(self) -> Tuple[int, int]:
         return self.index_in_row, self.index_in_col

@@ -1,10 +1,6 @@
 [essential]
     fix game restart in single
 
-    rework client-server communication:
-    send updates less frequently, instead use client-side prediction
-    maybe done
-
     rework labyrinth generation to eliminate tree-like structures with 0 chance of winning
     partially done
 
@@ -13,7 +9,8 @@
 
     fix player backwards move - probably impossible
 
-    optimize!!!!!
+    fix mino afk in single player
+
 [optional]
     make a UI for multiplayer
     not started

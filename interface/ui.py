@@ -39,7 +39,7 @@ class Ui(ABC):
     def get_affected_element(self, event: pygame.event.Event) -> Optional[UiElement]:
         if event.type == pygame.MOUSEBUTTONDOWN:
             click_pos = pygame.mouse.get_pos()
-            for element in self.elements:
+            for element in (e for e in self.elements if e.active):
                 if element.area.collidepoint(click_pos):
                     return element
         return None

@@ -24,6 +24,9 @@ class ListBox(UiElement):
     def add_item(self, item: str) -> None:
         self.items.append(item)
 
+    def update_item(self, item: str, pos: int):
+        self.items[pos] = item
+
     def remove_item(self, item: str) -> None:
         if item in self.items:
             self.items.remove(item)

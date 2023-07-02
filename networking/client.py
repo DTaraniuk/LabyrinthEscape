@@ -7,14 +7,12 @@ from typing import Optional
 class Client:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.player_name: Optional[str] = None
         self.connected: bool = False
 
         self.messages: list[SockMessage] = []
         self.messages_lock: Lock = Lock()
 
         self.listen_thread: Thread = Thread(target=self.__listen_and_record, daemon=True)
-        self.listen_thread.start()
 
     def try_connect(self, ip, port=7777) -> bool:
         try:
@@ -22,7 +20,7 @@ class Client:
             connection_confirmation = recv_sock_msg(self.client)
             if connection_confirmation.msg_type == MsgType.CONN:
                 self.connected = True
-                self.player_name = connection_confirmation.msg_content
+                self.listen_thread.start()
                 return True
         except socket.error:
             pass
@@ -38,7 +36,9 @@ class Client:
                 self.messages.append(msg)
 
     def fetch_messages(self) -> list[SockMessage]:
-        res = self.messages.copy()
+        res = list()
         with self.messages_lock:
-            self.messages.clear()
+            if len(self.messages) > 0:
+                res.extend(self.messages)
+                self.messages.clear()
         return res

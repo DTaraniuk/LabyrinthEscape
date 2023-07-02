@@ -5,11 +5,12 @@ from typing import Optional
 
 
 class MsgType(Enum):
+    CONN = 'conn'
+    RDY = 'rdy'
+    START = 'start'
     GS_UPD = 'gs_upd'
     MOVE = 'move'
-    RDY = 'rdy'
-    CONN = 'conn'
-    START = 'start'
+    LOBBY_INIT = 'lobby_init'
 
 
 class SockMessage:

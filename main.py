@@ -4,7 +4,7 @@ from pygame import Surface as pgs
 from game_logic import Maze, CoordPair, LePlayer, LeMinotaur, GameState, pathfinding, PlayerState
 from common import helper
 from app import LeApp
-from interface import MenuUi, RunMode, SinglePlayerUi, LobbyUi
+from interface import MenuUi, RunMode, SinglePlayerUi, MpLobbyUi, MpGameUi
 from graphics import Renderer
 
 WIN = pygame.display.set_mode((constants.WIDTH, constants.HEIGHT))
@@ -78,6 +78,7 @@ def main(win: pgs) -> None:
 app = LeApp(WIN)
 app.add_ui(MenuUi(), RunMode.Menu)
 app.add_ui(SinglePlayerUi(), RunMode.SinglePlayer)
-app.add_ui(LobbyUi(), RunMode.MpLobby)
+app.add_ui(MpLobbyUi(), RunMode.MpLobby)
+app.add_ui(MpGameUi(), RunMode.MpGame)
 
 app.run()

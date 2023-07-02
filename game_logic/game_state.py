@@ -103,7 +103,9 @@ class GameState:
 
             dist = player.center - self.minotaur.center
             abs_dist = math.sqrt(abs(dist.x)**2 + abs(dist.y)**2)
-            is_player_dead = abs_dist < constants.KILL_DIST and player_cell == mino_cell
+            catch_cells = list(player_cell.get_neighbors().values())
+            catch_cells.append(player_cell)
+            is_player_dead = abs_dist < constants.KILL_DIST and mino_cell in catch_cells
             if is_player_dead:
                 self.kill_player(player)
                 res[player.name] = PlayerState.DEAD

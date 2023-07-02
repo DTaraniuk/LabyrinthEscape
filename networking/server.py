@@ -6,10 +6,10 @@ from common import constants, helper
 from game_logic import LePlayer, GameState, Maze, LeMinotaur, CoordPair
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
-from .sock_message import SockMessage, MsgType, send_sock_msg, recv_sock_msg, send_message
-from .network_constants import *
+from networking.sock_message import SockMessage, MsgType, send_sock_msg, recv_sock_msg, send_message
+from networking.network_constants import *
 from datetime import datetime
-from .live_clock import LiveClock
+from networking.live_clock import LiveClock
 from typing import Callable, Any
 
 
@@ -71,6 +71,8 @@ class GameServer:
 
     def update_player_ready_map(self, name: str, msg: SockMessage) -> None:
         self.player_ready_map.update({name: not self.player_ready_map[name]})
+        msg = SockMessage(MsgType.RDY, name)
+        self.broadcast_message(msg)
 
     def update_player_movement(self, name: str, msg: SockMessage):
         player = self.gs.players.get(name)
@@ -148,10 +150,13 @@ class GameServer:
 
         # send player name to clients
         msg = SockMessage(MsgType.CONN, player_name)
-        self.broadcast_message(msg)
-        self.player_names.append(player.name)
+        self.player_names.append(player_name)
         self.player_ready_map[player_name] = False
-        self.clients[player.name] = conn
+        self.clients[player_name] = conn
+        # send current players, their ready status and final player name to the client
+        welcome_msg = SockMessage(MsgType.LOBBY_INIT, (player_name, self.player_ready_map))
+        send_message(conn, welcome_msg)
+        self.broadcast_message(msg)
         print(f"Player connected: {addr} with name {player_name}")
 
         client_listen_thread = Thread(target=self.listen_to_client, args=(player_name,), daemon=True)
