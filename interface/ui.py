@@ -14,8 +14,12 @@ INFO_BOX_HEIGHT = 50
 class Ui(ABC):
     def __init__(self):
         self.elements: list[UiElement] = []
-        self.hotkeys: dict[int, Callable[[], bool]] = {}
+        self.hotkeys: dict[int, Callable[[], bool]] = {
+            pygame.K_ESCAPE: self.back_hotkey
+        }
         self.switch_mode: Optional[RunMode] = None
+
+        # region common elements
         self._info_text_box = TextBox(name='info_tb',
                                       area=pygame.Rect(constants.WIDTH - INFO_BOX_WIDTH,
                                                        constants.HEIGHT - INFO_BOX_HEIGHT,
@@ -24,6 +28,7 @@ class Ui(ABC):
                                       text_color=constants.ORANGE,
                                       active=False)
         self.elements.append(self._info_text_box)
+        # endregion
 
     def add_element(self, element: UiElement):
         self.elements.append(element)
@@ -53,5 +58,9 @@ class Ui(ABC):
     def user_info(self, text: str) -> None:
         self._info_text_box.active = True
         self._info_text_box.text = text
+
+    def back_hotkey(self) -> bool:
+        self.switch_mode = RunMode.Prev
+        return True
 
 

@@ -7,7 +7,7 @@ from typing import Callable
 class LeApp:
     def __init__(self, win: pygame.Surface):
         self.uis: dict[RunMode, Ui] = {}
-        self.mode: RunMode = RunMode.Menu
+        self.run_mode_stack: list[RunMode] = [RunMode.Menu]
         self.active_ui: Ui = None
         self.main_surface: pygame.Surface = win
         self._run: bool = False
@@ -21,7 +21,7 @@ class LeApp:
 
     def run(self):
         self._run = True
-        self.active_ui = self.uis[self.mode]
+        self.active_ui = self.uis[self.run_mode_stack[-1]]
         clock = pygame.time.Clock()
 
         while self._run:
@@ -44,7 +44,8 @@ class LeApp:
 
     def ui_transition(self):
         if self.active_ui.switch_mode:
-            mode_pair: tuple[RunMode, RunMode] = (self.mode, self.active_ui.switch_mode)
+            current_run_mode = self.run_mode_stack[-1]
+            mode_pair: tuple[RunMode, RunMode] = (current_run_mode, self.active_ui.switch_mode)
             if mode_pair in self._ui_transition_map:
                 action = self._ui_transition_map.get(mode_pair)
             else:
@@ -52,8 +53,14 @@ class LeApp:
             action()
 
     def _from_any_to_any(self):
-        self.mode = self.active_ui.switch_mode
-        self.active_ui = self.uis[self.mode]
+        next_mode = self.active_ui.switch_mode
+        self.active_ui.switch_mode = None
+        if next_mode == RunMode.Prev:
+            if len(self.run_mode_stack) > 1:
+                self.run_mode_stack.pop()
+        else:
+            self.run_mode_stack.append(next_mode)
+        self.active_ui = self.uis[self.run_mode_stack[-1]]
 
     def _from_mp_lobby_to_mp_game(self):
         lobby_ui = self.active_ui

@@ -5,7 +5,7 @@ import time
 from common import constants, helper
 from game_logic import LePlayer, GameState, Maze, LeMinotaur, CoordPair
 from threading import Thread
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from networking.sock_message import SockMessage, MsgType, send_sock_msg, recv_sock_msg, send_message
 from networking.network_constants import *
 from datetime import datetime
@@ -15,20 +15,19 @@ from typing import Callable, Any
 
 class GameServer:
     def __init__(self, host='localhost', port=7777):
-        self.client_listen_threads: dict[str, threading.Thread] = {}
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((host, port))
         self.server.listen(2)
-        self.clients: dict[str, socket.socket] = {}
         self.player_names: list[str] = []
+        self.clients: dict[str, socket.socket] = {}
+        self.player_ready_map: dict[str, bool] = {}
+        self.client_listen_threads: dict[str, threading.Thread] = {}
 
         self.maze = Maze(constants.ROWS, constants.WIDTH)
         self.maze.generate_labyrinth()
         self.gs = GameState(self.maze, write_changes=True)
         self.gs_lock: threading.Lock = threading.Lock()
         self.broadcast_advance_thread: threading.Thread = Thread(target=self.advance_and_broadcast, daemon=True)
-
-        self.player_ready_map: dict[str, bool] = {}
 
         self.connecting = True
         self.running = False
@@ -81,7 +80,7 @@ class GameServer:
             print(f'Failed to get player {name}.')
         with self.gs_lock:
             player.move_direction = move_direction
-        msg = SockMessage(MsgType.MOVE, (name, move_direction, self.gs.step))
+            msg = SockMessage(MsgType.MOVE, (name, move_direction, self.gs.step))
         self.broadcast_message(msg)
 
     def broadcast_message(self, msg: SockMessage):
@@ -104,23 +103,17 @@ class GameServer:
             # curr_time = datetime.now()
             with self.gs_lock:
                 self.gs.advance_timeline(1)
-            # print(f"server advance on time {self.gs.time}")
-            change = self.gs.get_aggregated_changes()
+                if self.gs.step % GSC_CHANGE_RATE == 0:
+                    change = self.gs.get_aggregated_changes()
+                    msg = SockMessage(MsgType.GS_UPD, change)
+                    self.broadcast_message(msg)
 
-            if self.gs.step % GSC_CHANGE_RATE == 0:
-                msg = SockMessage(MsgType.GS_UPD, change)
-                self.broadcast_message(msg)
-                # print(f"Sent gs update to clients on time {change.step} at {datetime.now().time()}")
-
-            # print(f"Time before tick : {datetime.now()}")
             clock.tick(constants.FPS)
-            # print(f"{(datetime.now() - curr_time).total_seconds()}\t{datetime.now().time()}")
-            # print(f"Time after tick : {datetime.now()}")
 
     def listen_for_connections(self):
         while self.connecting:
             conn, addr = self.server.accept()
-            send_sock_msg(conn, MsgType.CONN, None) # confirm connection
+            send_sock_msg(conn, MsgType.CONN, None)  # confirm connection
 
             init_msg: SockMessage = recv_sock_msg(conn)
             if init_msg.msg_type != MsgType.CONN:

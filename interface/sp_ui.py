@@ -37,7 +37,9 @@ class SinglePlayerUi(Ui):
         self.gs.advance_timeline(1)
 
     def process_event(self, event: pygame.event.Event):
-        pass
+        if event.type == pygame.KEYDOWN:
+            if event.key in self.hotkeys:
+                self.hotkeys[event.key]()
 
     def render(self, surface: pygame.Surface):
         if not self._renderer:
