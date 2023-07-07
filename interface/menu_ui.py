@@ -46,7 +46,10 @@ class MenuUi(Ui):
                 if element.label in self._btn_action_map.keys():
                     self._btn_action_map[element.label]()
 
-# region btn press methods
+    def reset(self):
+        pass
+
+    # region btn press methods
 
     def on_sp_btn_press(self):
         self.switch_mode = RunMode.SinglePlayer
@@ -54,5 +57,5 @@ class MenuUi(Ui):
     def on_mp_btn_press(self):
         self.switch_mode = RunMode.MpLobby
 
-# endregion
+    # endregion
 

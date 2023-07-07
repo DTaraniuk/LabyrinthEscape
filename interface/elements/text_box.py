@@ -13,7 +13,7 @@ class TextBox(UiElement):
                  text_color: tuple[int, int, int] = constants.BLACK,
                  level: int = 0,
                  active: bool = False,
-                 clear_init_text_on_select: bool = False
+                 clear_text_on_select: bool = False
                  ):
         super().__init__(name=name,
                          area=area,
@@ -22,7 +22,7 @@ class TextBox(UiElement):
                          active=active)
         self.text = text
         self.text_color = text_color
-        self.clear_init_text_on_select = clear_init_text_on_select
+        self.clear_text_on_select = clear_text_on_select
 
     def draw(self, surface: pygame.Surface):
         pygame.draw.rect(surface, self.color, self.area)

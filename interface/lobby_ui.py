@@ -32,10 +32,12 @@ class MpLobbyUi(Ui):
     def __init__(self):
         super().__init__()
 
-        self._btn_action_map: dict[str, Callable] = {
+        btn_action_map: dict[str, Callable] = {
             CONNECT_BUTTON_NAME: self.on_conn_btn_press,
             READY_BTN_NAME: self.on_ready_btn_press
         }
+
+        self._element_name_action_map.update(btn_action_map)
 
         self._msg_action_map: dict[MsgType, Callable[[SockMessage], Any]] = {
             MsgType.CONN: self.update_player_status,
@@ -52,7 +54,7 @@ class MpLobbyUi(Ui):
                                       text=NAME_TB_INIT_TEXT,
                                       text_color=constants.ORANGE,
                                       active=True,
-                                      clear_init_text_on_select=True)
+                                      clear_text_on_select=True)
         self.elements.append(self._name_text_box)
         self._ip_text_box = TextBox(name=IP_TB_NAME,
                                     area=get_area_rect(1),
@@ -60,7 +62,7 @@ class MpLobbyUi(Ui):
                                     text=IP_TB_INIT_TEXT,
                                     text_color=constants.ORANGE,
                                     active=True,
-                                    clear_init_text_on_select=True)
+                                    clear_text_on_select=True)
         self.elements.append(self._ip_text_box)
         self._connect_btn = Button(name=CONNECT_BUTTON_NAME,
                                    area=get_area_rect(2),
@@ -69,7 +71,6 @@ class MpLobbyUi(Ui):
                                    label_color=constants.BLUE,
                                    active=True)
         self.elements.append(self._connect_btn)
-        self._tb_input: Optional[TextBox] = None
         # client-server
         self._ready_button = Button(name=READY_BTN_NAME,
                                     area=get_area_rect(0),
@@ -98,47 +99,24 @@ class MpLobbyUi(Ui):
             self.process_server_message(message)
         super().process_events(events)
 
-    def process_event(self, event: pygame.event.Event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            element = self.get_affected_element(event)
-            self._tb_input = None
-            if isinstance(element, TextBox):
-                self._tb_input = element
-                if element.clear_init_text_on_select:
-                    element.text = ''
-            elif isinstance(element, Button):
-                action = self._btn_action_map.get(element.name)
-                if not action:
-                    self.user_info(f"Element not in action map: {element.name}")
-                else:
-                    action()
-
-        elif event.type == pygame.KEYDOWN:
-            # hotkeys
-            if event.key in self.hotkeys:
-                if self.hotkeys[event.key]():
-                    return
-            # input
-            if not self._tb_input:
-                return
-            else:
-                tb = self._tb_input
-                if event.key == pygame.K_RETURN:
-                    self._tb_input = None
-                elif event.key == pygame.K_BACKSPACE:
-                    tb.text = tb.text[:-1]
-                else:
-                    tb.text += event.unicode
-
     def paste(self) -> bool:
         if self._tb_input and pygame.key.get_mods() & pygame.KMOD_CTRL:
             self._tb_input.paste()
             return True
         return False
 
+    def reset(self):
+        self.gs = None
+        self.player_name = None
+        self.client = Client()
+        self._ip_text_box.active = True
+        self._name_text_box.active = True
+        self._connect_btn.active = True
+        self._player_list_box.active = False
+        self._ready_button.active = False
     # region button actions
 
-    def on_conn_btn_press(self):
+    def on_conn_btn_press(self, element):
         success = self.client.try_connect(self._ip_text_box.text)
         if not success:
             self._ip_text_box.text_color = constants.RED
@@ -150,7 +128,10 @@ class MpLobbyUi(Ui):
         self._ready_button.active = True
         self.client.send_message(MsgType.CONN, self._name_text_box.text)
 
-    def on_ready_btn_press(self):
+    def on_ready_btn_press(self, element):
+        if not isinstance(element, Button):
+            return
+        element.label = self.get_ready_str(not self._player_ready_map[self.player_name])
         self.client.send_message(MsgType.RDY, None)
 
     # endregion
@@ -182,7 +163,11 @@ class MpLobbyUi(Ui):
         if name not in self._player_ready_map:
             self.user_info('Error in player ready str')
             return ':('
-        return 'Ready' if self._player_ready_map[name] else 'Not ready'
+        return self.get_ready_str(self._player_ready_map[name])
+
+    @staticmethod
+    def get_ready_str(ready: bool) -> str:
+        return 'Ready' if ready else 'Not ready'
 
     def start_game(self, msg: SockMessage):
         self.switch_mode = RunMode.MpGame

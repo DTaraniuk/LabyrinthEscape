@@ -45,6 +45,12 @@ class MpGameUi(Ui):
             self._renderer = Renderer(surface, self.player_name)
         self._renderer.render(self.gs)
 
+    def reset(self):
+        self.client = None
+        self.gs = None
+        self.player_name = None
+        self._renderer = None
+
     # region msg actions
 
     def process_server_message(self, msg: SockMessage):

@@ -55,6 +55,7 @@ class LeApp:
     def _from_any_to_any(self):
         next_mode = self.active_ui.switch_mode
         self.active_ui.switch_mode = None
+        self.active_ui.reset()
         if next_mode == RunMode.Prev:
             if len(self.run_mode_stack) > 1:
                 self.run_mode_stack.pop()
