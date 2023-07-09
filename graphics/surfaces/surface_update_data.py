@@ -1,10 +1,11 @@
 import pygame
-from game_logic import Cell, LePlayer
+from game_logic import Cell, LePlayer, Wall
 
 
 class SurfaceUpdateData:
     def __init__(self,
                  cells_to_update: list[Cell] = None,
+                 walls_to_update: list[Wall] = None,
                  path: list[Cell] = None,
                  path_color: tuple[int, int, int] = None,
                  text: str = None,
@@ -14,6 +15,7 @@ class SurfaceUpdateData:
                  shade_color: tuple[int, int, int] = None):
         # maze
         self.cells_to_update = cells_to_update
+        self.walls_to_update = walls_to_update
         # path
         self.path = path
         self.path_color = path_color

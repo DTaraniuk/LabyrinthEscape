@@ -1,7 +1,7 @@
 import random
 from .le_player import LePlayer
 from game_logic.direction import *
-from game_logic.pathfinding import PathfindingRes, astar
+from game_logic.maze.pathfinding import PathfindingRes, astar
 from game_logic.maze import Maze
 from game_logic.player.modifier.le_modifier import LeModifierType
 from game_logic.player.modifier.le_mino_acceleration_modifier import LeMinoAccelerationModifier

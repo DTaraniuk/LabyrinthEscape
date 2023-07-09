@@ -20,15 +20,22 @@ class Renderer:
         upd_data = SurfaceUpdateData()
         player_vision = gs.get_player_vision(gs.players[self._player_name])
         cells_to_update = set(c for c in player_vision)
+        walls_to_update = set()
         for c in player_vision:
+            walls_to_update.update(c.get_walls().values())
             cells_to_update.update(c.get_neighbors().values())
 
         upd_data.cells_to_update = cells_to_update
+        upd_data.walls_to_update = walls_to_update
         players_with_images = [(player, self._image_storage.get_or_add(player)) for player in gs.players.values()]
         upd_data.players_with_images = players_with_images
 
-        self._surface_manager.update_surface(upd_data, SurfaceType.MAZE)
-        self._surface_manager.update_surface(upd_data, SurfaceType.PLAY)
+        surfaces_to_update = [
+            SurfaceType.CELL,
+            SurfaceType.WALL,
+            SurfaceType.PLAY
+        ]
+        self._surface_manager.update_surfaces(upd_data, surfaces_to_update)
 
     def render(self, gs: GameState):
         self.update_surfaces(gs)

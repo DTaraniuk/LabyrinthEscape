@@ -1,7 +1,8 @@
 from typing import Callable
+import pygame
 import math
 from .constants import *
-from game_logic import Maze, CoordPair, Cell, PathfindingRes
+from game_logic import CoordPair
 
 
 def wait_for_input():
@@ -13,32 +14,49 @@ def wait_for_input():
                 return
 
 
-def read_endpoints(maze: Maze) -> tuple[Cell, Cell]:
-    click_num = 0
-    width = WIDTH/ROWS
-    start: Cell = None
-    end: Cell = None
-    while click_num < 2:
-        click = pygame.event.wait()
-        if click.type != pygame.MOUSEBUTTONDOWN:
-            continue
-        x, y = tuple(int(value // width) for value in click.pos)
-        if click_num == 0:
-            start = maze[x, y]
-        else:
-            end = maze[x, y]
-        click_num += 1
-    return start, end
+# def read_endpoints() -> tuple[Cell, Cell]:
+#     click_num = 0
+#     width = WIDTH/ROWS
+#     start: Cell = None
+#     end: Cell = None
+#     while click_num < 2:
+#         click = pygame.event.wait()
+#         if click.type != pygame.MOUSEBUTTONDOWN:
+#             continue
+#         x, y = tuple(int(value // width) for value in click.pos)
+#         if click_num == 0:
+#             start = maze[x, y]
+#         else:
+#             end = maze[x, y]
+#         click_num += 1
+#     return start, end
 
 
-def handle_pathfinding_call(renderer, maze, algo: Callable[[Cell, Cell], PathfindingRes],
-                            path_color: tuple[int, int, int]):
-    start, end = read_endpoints(maze)
-    pathfinding_res = algo(start, end)
-    # for cell in pathfinding_res.affected_nodes:
-    #     cell.color = cell_color
-    #     cell.request_update()
-    renderer.render_path(pathfinding_res.path, path_color)
+# def handle_pathfinding_call(renderer, maze, algo: Callable[[Cell, Cell], PathfindingRes],
+#                             path_color: tuple[int, int, int]):
+#     start, end = read_endpoints(maze)
+#     pathfinding_res = algo(start, end)
+#     for cell in pathfinding_res.affected_nodes:
+#         cell.color = cell_color
+#         cell.request_update()
+#     renderer.render_path(pathfinding_res.path, path_color)
+def collide_rect_circle(rect, circle_center, circle_radius):
+    circle_distance_x = abs(circle_center[0] - rect.centerx)
+    circle_distance_y = abs(circle_center[1] - rect.centery)
+
+    if (circle_distance_x > (rect.w/2 + circle_radius)):
+        return False
+    if (circle_distance_y > (rect.h/2 + circle_radius)):
+        return False
+
+    if (circle_distance_x <= (rect.w/2)):
+        return True
+    if (circle_distance_y <= (rect.h/2)):
+        return True
+
+    corner_distance_sq = (circle_distance_x - rect.w/2)**2 + (circle_distance_y - rect.h/2)**2
+
+    return (corner_distance_sq <= (circle_radius**2))
 
 
 def input_movement() -> CoordPair:

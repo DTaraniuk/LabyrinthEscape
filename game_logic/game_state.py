@@ -5,7 +5,7 @@ from .player import LePlayer, PlayerState
 from .player.le_minotaur import LeMinotaur
 from .player.modifier.le_modifier import LeModifier
 from .maze import Maze
-from .cell import Cell
+from game_logic.maze.cell import Cell
 from .direction import *
 from collections import deque
 

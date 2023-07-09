@@ -5,7 +5,8 @@ from .surfaces import *
 
 # The order is crucial
 surface_classes = {
-            SurfaceType.MAZE: MazeSurface,
+            SurfaceType.CELL: CellSurface,
+            SurfaceType.WALL: WallSurface,
             SurfaceType.GRID: GridSurface,
             SurfaceType.PATH: PathSurface,
             SurfaceType.PLAY: PlaySurface,
@@ -23,7 +24,8 @@ class SurfaceManager:
     def _init_surfaces(self):
         scr_size = (WIDTH, WIDTH)
         self._surfaces = {key: cls(pygame.Surface(scr_size, pygame.SRCALPHA), False) for key, cls in surface_classes.items()}
-        essentials = [SurfaceType.MAZE,
+        essentials = [SurfaceType.CELL,
+                      SurfaceType.WALL,
                       SurfaceType.PLAY]
         self.show_surfaces(essentials)
 

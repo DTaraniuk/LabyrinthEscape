@@ -9,7 +9,8 @@ from game_logic import CoordPair
 
 class SurfaceType(enum.Enum):
     MAIN = 'main'
-    MAZE = 'maze'
+    CELL = 'cell'
+    WALL = 'wall'
     GRID = 'grid'
     PATH = 'path'
     TEXT = 'text'

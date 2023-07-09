@@ -1,5 +1,5 @@
 import pygame
-from game_logic import Cell, LePlayer, Direction
+from game_logic import Cell, LePlayer, Direction, Wall
 from common import constants
 
 
@@ -56,3 +56,10 @@ def draw_grid(grid_surface: pygame.Surface, color: tuple[int, int, int]):
     for i in range(constants.ROWS):
         pygame.draw.line(grid_surface, color, (0, i * cell_width), (constants.WIDTH, i * cell_width))
         pygame.draw.line(grid_surface, color, (i * cell_width, 0), (i * cell_width, constants.WIDTH))
+
+
+def draw_wall(wall_surface: pygame.Surface, wall: Wall):
+    if wall.requires_update:
+        wall_surface.fill(wall.color, wall.area)
+        wall.requires_update = False
+

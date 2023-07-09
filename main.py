@@ -1,7 +1,8 @@
 import pygame
 from common import constants
 from pygame import Surface as pgs
-from game_logic import Maze, CoordPair, LePlayer, LeMinotaur, GameState, pathfinding, PlayerState
+from game_logic import Maze, CoordPair, LePlayer, LeMinotaur, GameState, PlayerState
+from game_logic.maze import pathfinding
 from common import helper
 from app import LeApp
 from interface import MenuUi, RunMode, SinglePlayerUi, MpLobbyUi, MpGameUi

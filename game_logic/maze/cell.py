@@ -1,18 +1,19 @@
 from common.constants import *
 from typing import Tuple
-from .direction import *
-from .coordpair import CoordPair
+from game_logic.direction import *
+from game_logic.coordpair import CoordPair
+from .wall import Wall
 
 
 class Cell:
-    def __init__(self, row: int, col: int, width: int, total_rows: int):
+    def __init__(self, row: int, col: int, width: int):
         self.index_in_row = row
         self.index_in_col = col
         self.width = width
         self._neighbors: dict[Direction, 'Cell'] = {}
-        self.total_rows = total_rows
+        self._walls: dict[Direction, Wall] = {}
         self._color: Tuple[int, int, int] = WHITE
-        self.is_updated = False
+        self.is_updated = False  # if the cell needs to be redrawn
 
     def __lt__(self, other):
         return self.index_in_row + self.index_in_col < other.index_in_row + other.index_in_col
@@ -33,12 +34,40 @@ class Cell:
     def get_neighbors(self) -> dict[Direction, 'Cell']:
         return self._neighbors.copy()
 
-    def add_neighbor(self, other: 'Cell', dir_: Direction = None):
-        if dir_ is None:
-            dir_ = get_direction(self.get_distance(other))
-        if dir_ is not None:
-            self._neighbors[dir_] = other
-            other._neighbors[dir_.opposite()] = self
+    # also removes wall
+    def add_neighbor(self, other: 'Cell', direction: Direction = None):
+        if direction is None:
+            direction = get_direction(self.get_distance(other))
+
+        if self._neighbors.get(direction):
+            return
+
+        opp_direction = direction.opposite()
+
+        self._neighbors[direction] = other
+        other._neighbors[opp_direction] = self
+
+        wall = self._walls.get(direction)
+        if wall:
+            self._walls.pop(direction)
+            other._walls.pop(opp_direction)
+
+    def get_walls(self) -> dict[Direction, Wall]:
+        return self._walls.copy()
+
+    # also removes neighbor
+    def add_wall(self, wall: Wall, direction: Direction):
+        if self._walls.get(direction):
+            return
+
+        opp_direction = direction.opposite()
+
+        self._walls[direction] = wall
+        neighbor = self._neighbors.get(direction)
+        if neighbor:
+            neighbor._walls[opp_direction] = wall
+            self._neighbors.pop(direction)
+            neighbor._neighbors.pop(opp_direction)
 
     def get_index(self) -> Tuple[int, int]:
         return self.index_in_row, self.index_in_col
