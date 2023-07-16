@@ -6,9 +6,9 @@ from .wall import Wall
 
 
 class Cell:
-    def __init__(self, row: int, col: int, width: int):
-        self.index_in_row = row
-        self.index_in_col = col
+    def __init__(self, index_in_row: int, index_in_col: int, width: int):
+        self.index_in_row = index_in_row
+        self.index_in_col = index_in_col
         self.width = width
         self._neighbors: dict[Direction, 'Cell'] = {}
         self._walls: dict[Direction, Wall] = {}

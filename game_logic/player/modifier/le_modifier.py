@@ -2,16 +2,16 @@ import enum
 from abc import ABC
 
 
-class LeModifierType(enum.Enum):
+class ModifierType(enum.Enum):
     Speed = 'spd',
 
 
-class LeModifier(ABC):
-    def __init__(self, duration_ticks: int, mod_type: LeModifierType):
+class Modifier(ABC):
+    def __init__(self, duration_ticks: int, mod_type: ModifierType):
         self._duration: int = duration_ticks
         self.is_permanent = False
         self.is_active: bool = True if duration_ticks > 0 else False
-        self.type: LeModifierType = mod_type
+        self.type: ModifierType = mod_type
 
     @property
     def duration(self):

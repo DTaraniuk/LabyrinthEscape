@@ -1,5 +1,5 @@
 import socket
-from .player import LePlayer
+from .player import Player
 
 
 class Lobby:

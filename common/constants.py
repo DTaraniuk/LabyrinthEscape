@@ -35,16 +35,18 @@ MINOTAUR_IMG = 'minotaur.png'
 FPS = 60
 _secs_to_pass_cell = 1
 PLAYER_SPEED = WIDTH/ROWS/FPS/_secs_to_pass_cell
-PLAYER_SPEED = PLAYER_SPEED if PLAYER_SPEED > 0 else 1
 _secs_player_mem = 10
 PLAYER_MEM_SIZE = FPS * _secs_player_mem
 MINOTAUR_SPEED = PLAYER_SPEED * 2/3
+MINOTAUR_ACC_MAX_ANGLE = 10
 KILL_DIST = WIDTH/ROWS/3
 # endregion
 
 # region graphics
 
 PLAYER_NAME_FONT = pygame.font.Font(None, 18)  # Parameters are 'None' or a filename, and a size (in points)
+PLAYER_CIRCLE_COLOR = BLUE
+PLAYER_CIRCLE_WIDTH = 1
 # endregion
 
 # region network signals

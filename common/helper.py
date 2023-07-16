@@ -40,23 +40,6 @@ def wait_for_input():
 #         cell.color = cell_color
 #         cell.request_update()
 #     renderer.render_path(pathfinding_res.path, path_color)
-def collide_rect_circle(rect, circle_center, circle_radius):
-    circle_distance_x = abs(circle_center[0] - rect.centerx)
-    circle_distance_y = abs(circle_center[1] - rect.centery)
-
-    if (circle_distance_x > (rect.w/2 + circle_radius)):
-        return False
-    if (circle_distance_y > (rect.h/2 + circle_radius)):
-        return False
-
-    if (circle_distance_x <= (rect.w/2)):
-        return True
-    if (circle_distance_y <= (rect.h/2)):
-        return True
-
-    corner_distance_sq = (circle_distance_x - rect.w/2)**2 + (circle_distance_y - rect.h/2)**2
-
-    return (corner_distance_sq <= (circle_radius**2))
 
 
 def input_movement() -> CoordPair:

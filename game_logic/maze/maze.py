@@ -41,26 +41,45 @@ class Maze:
         hor_walls = []
         ver_walls = []
 
-        for i in range(rows + 1):  # Create horizontal walls
+        for i in range(rows):  # Create horizontal walls
             hor_walls.append([])
-            for j in range(rows):
-                y = i * cell_width - wall_width
+
+            x = i * cell_width - wall_width
+
+            width = cell_width + wall_width * 2
+            if x < 0:  # Leftmost, outside the maze
+                x = 0
+                width -= wall_width
+
+            for j in range(rows + 1):
+                y = j * cell_width - wall_width
+
                 height = wall_width * 2
-                if y < 0:  # Topmost wall, outside the maze
+                if y < 0:  # Topmost, outside the maze
                     y = 0
-                    height = wall_width
-                wall_rect = pygame.Rect(j * cell_width, y, cell_width, height)
+                    height -= wall_width
+
+                wall_rect = pygame.Rect(x, y, width, height)
                 hor_walls[i].append(Wall(wall_rect))
 
         for i in range(rows):  # Create vertical walls
             ver_walls.append([])
+
+            y = i * cell_width - wall_width
+
+            height = cell_width + wall_width * 2
+
+            if y < 0: # Topmost, outside the maze
+                height -= wall_width
+                y = 0
+
             for j in range(rows + 1):
                 x = j * cell_width - wall_width
                 width = wall_width * 2
-                if x < 0:  # Leftmost wall, outside the maze
-                    width = wall_width
+                if x < 0:  # Leftmost, outside the maze
+                    width -= wall_width
                     x = 0
-                wall_rect = pygame.Rect(x, i * cell_width, width, cell_width)
+                wall_rect = pygame.Rect(x, y, width, height)
                 ver_walls[i].append(Wall(wall_rect))
 
         # Init cells and associate walls with them
@@ -70,27 +89,16 @@ class Maze:
                 cell = Cell(i, j, self.cell_width)
                 self.cells[i].append(cell)
 
-                # Associate walls with the cell
-                error_msg = f'Indexing error during wall creation: i={i}, j={j}'
-                # Horizontal walls
-                if i < len(hor_walls):  # Wall above
+                try:
+                    # Horizontal walls
                     cell.add_wall(hor_walls[i][j], Direction.NORTH)
-                else:
-                    print(error_msg)
-                if (i + 1) < len(hor_walls):  # Wall below
-                    cell.add_wall(hor_walls[i + 1][j], Direction.SOUTH)
-                else:
-                    print(error_msg)
+                    cell.add_wall(hor_walls[i][j + 1], Direction.SOUTH)
 
-                # Vertical walls
-                if j < len(ver_walls[i]):  # Wall on the left
-                    cell.add_wall(ver_walls[i][j], Direction.WEST)
-                else:
-                    print(error_msg)
-                if (j + 1) < len(ver_walls[i]):  # Wall on the right
-                    cell.add_wall(ver_walls[i][j + 1], Direction.EAST)
-                else:
-                    print(error_msg)
+                    # Vertical walls
+                    cell.add_wall(ver_walls[j][i], Direction.WEST)
+                    cell.add_wall(ver_walls[j][i + 1], Direction.EAST)
+                except IndexError as e:
+                    print(f'Error during wall assignment: {e}')
 
     def carve_path(self, x: int, y: int, cell_visit_data: list[list[int]], max_visits: int) -> None:
         directions = list(Direction)
@@ -141,6 +149,8 @@ class Maze:
             for cell in row:
                 res.append(cell)
         return res
+
+
 
     def process_cells(self, operation: Callable[[Cell], None]):
         for cell in self.get_cells():

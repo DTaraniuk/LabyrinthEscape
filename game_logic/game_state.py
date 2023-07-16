@@ -1,9 +1,11 @@
 import math
 
+import pygame
+
 from common import constants
-from .player import LePlayer, PlayerState
-from .player.le_minotaur import LeMinotaur
-from .player.modifier.le_modifier import LeModifier
+from .player import Player, PlayerState
+from .player.minotaur import Minotaur
+from .player.modifier.le_modifier import Modifier
 from .maze import Maze
 from game_logic.maze.cell import Cell
 from .direction import *
@@ -24,25 +26,25 @@ class GameStateChange:
         self.player_positions: dict[str, CoordPair] = {}
         self.player_directions: dict[str, CoordPair] = {}
         self.player_states: dict[str, PlayerState] = {}
-        self.player_modifiers: dict[str, list[LeModifier]] = {}
+        self.player_modifiers: dict[str, list[Modifier]] = {}
 
 
 class GameState:
     def __init__(self, maze: Maze, write_changes: bool = False):
-        self.players: dict[str, LePlayer] = {}
-        self.minotaur: LeMinotaur = None
+        self.players: dict[str, Player] = {}
+        self.minotaur: Minotaur = None
         self.maze = maze
         self._all_player_mem: dict[str, deque[tuple[int, list[Cell]]]] = {}
         self.step: int = 0
         self.write_changes: bool = write_changes
         self.changes: list[GameStateChange] = []
 
-    def add_player(self, player: LePlayer):  # if there is no minotaur, add as minotaur
+    def add_player(self, player: Player):  # if there is no minotaur, add as minotaur
         if self.minotaur is None:
-            if isinstance(player, LeMinotaur):
+            if isinstance(player, Minotaur):
                 self.minotaur = player
             else:
-                mino = LeMinotaur(player.pos, player.size, constants.MINOTAUR_IMG)
+                mino = Minotaur(player.pos, player.radius, constants.MINOTAUR_IMG)
                 self.minotaur = mino
         self.players[player.name] = player
         self._all_player_mem[player.name] = deque()
@@ -58,7 +60,7 @@ class GameState:
 
             old_modifiers = player.get_modifiers()
             self._move_player(player, ticks)
-            change.player_positions[player.name] = player.pos
+            change.player_positions[player.name] = player.center
             change.player_directions[player.name] = player.move_direction
             self._update_player_vision(player)
             new_modifiers = player.get_modifiers()
@@ -70,9 +72,9 @@ class GameState:
         if self.write_changes:
             self.changes.append(change)
 
-    def get_player_vision(self, player: LePlayer) -> set[Cell]:
+    def get_player_vision(self, player: Player) -> set[Cell]:
         # minotaur has allvision
-        if isinstance(player, LeMinotaur):
+        if isinstance(player, Minotaur):
             return set(self.maze.get_cells())
 
         player_mem = self._all_player_mem[player.name]
@@ -81,8 +83,8 @@ class GameState:
             res.update(mem_entry[1])
         return res
 
-    def _update_player_vision(self, player: LePlayer):
-        if isinstance(player, LeMinotaur):
+    def _update_player_vision(self, player: Player):
+        if isinstance(player, Minotaur):
             return
         player_cell = self.maze.get_cell(player.center)
         current_vision = player_cell.get_visible_cells()
@@ -119,33 +121,52 @@ class GameState:
         player.state = PlayerState.DEAD
         self._all_player_mem[player.name].clear()
 
-    def _move_player(self, player: LePlayer, ticks: int):
+    def _move_player(self, player: Player, ticks: int):
         player.update_modifiers(ticks)
-        move_vector = player.move(ticks)
-        target_x = max(1, min(self.maze.width - 1, move_vector.x))
-        target_y = max(1, min(self.maze.width - 1, move_vector.y))
 
-        x, y = player.center.to_tuple()
-        current_cell = self.maze.get_cell(CoordPair(x, y))
-        target_x_cell = self.maze.get_cell(CoordPair(target_x, y))
-        target_y_cell = self.maze.get_cell(CoordPair(x, target_y))
+        close_objects = []
 
-        curr_x, curr_y = current_cell.get_pos()
-        if current_cell != target_x_cell:
-            if not current_cell.is_neighbor(target_x_cell):
-                if player.move_direction.x > 0:  # moving right
-                    target_x = curr_x + current_cell.width - 1
-                else:  # moving left
-                    target_x = curr_x
+        curr_cell = self.maze.get_cell(player.center)
+        curr_cell_with_neighbors = [curr_cell] + list(curr_cell.get_neighbors().values())
 
-        if current_cell != target_y_cell:
-            if not current_cell.is_neighbor(target_y_cell):
-                if player.move_direction.y > 0:  # moving down
-                    target_y = curr_y + current_cell.width - 1
-                else:  # moving up
-                    target_y = curr_y
+        for cell in curr_cell_with_neighbors:
+            close_objects.extend(cell.get_walls().values())
 
-        player.center = (target_x, target_y)
+        for player in self.players.values():
+            player_center = player.center
+            if any(pygame.Rect(c.get_x(), c.get_y(), c.width, c.width).collidepoint(player_center.x, player_center.y)
+                   for c in curr_cell_with_neighbors):
+                close_objects.append(player)
+
+        player.move(ticks=ticks)
+
+        for obj in close_objects:
+            player.collide(obj)
+
+        # target_x = max(1, min(self.maze.width - 1, move_vector.x))
+        # target_y = max(1, min(self.maze.width - 1, move_vector.y))
+        #
+        # x, y = player.center.to_tuple()
+        # current_cell = self.maze.get_cell(CoordPair(x, y))
+        # target_x_cell = self.maze.get_cell(CoordPair(target_x, y))
+        # target_y_cell = self.maze.get_cell(CoordPair(x, target_y))
+        #
+        # curr_x, curr_y = current_cell.get_pos()
+        # if current_cell != target_x_cell:
+        #     if not current_cell.is_neighbor(target_x_cell):
+        #         if player.move_direction.x > 0:  # moving right
+        #             target_x = curr_x + current_cell.width - 1
+        #         else:  # moving left
+        #             target_x = curr_x
+        #
+        # if current_cell != target_y_cell:
+        #     if not current_cell.is_neighbor(target_y_cell):
+        #         if player.move_direction.y > 0:  # moving down
+        #             target_y = curr_y + current_cell.width - 1
+        #         else:  # moving up
+        #             target_y = curr_y
+        #
+        # player.center = (target_x, target_y)
 
     def reset(self):
         self.maze = Maze(constants.ROWS, constants.WIDTH)
@@ -185,7 +206,7 @@ class GameState:
             if name in change.player_states:
                 player.state = change.player_states[player.name]
             if name in change.player_positions:
-                player.pos = change.player_positions[player.name]
+                player.center = change.player_positions[player.name]
             if name in change.player_directions:
                 player.move_direction = change.player_directions[player.name]
             if name in change.player_modifiers:
@@ -199,6 +220,6 @@ class GameState:
             return
         if time < self.step:    # we need to adjust the position due to outdated direction update
             adjustment = (new_direction - player.move_direction) * (self.step - time) * player.speed
-            player.pos += adjustment
+            player.center += adjustment
         player.move_direction = new_direction
 

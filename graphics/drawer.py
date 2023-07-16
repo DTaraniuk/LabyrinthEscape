@@ -1,5 +1,5 @@
 import pygame
-from game_logic import Cell, LePlayer, Direction, Wall
+from game_logic import Cell, Player, Direction, Wall
 from common import constants
 
 
@@ -10,44 +10,29 @@ def draw_cell(cell: Cell, pgs: pygame.Surface) -> None:
     x, y = cell.index_in_row * width, cell.index_in_col * width
     pygame.draw.rect(pgs, cell.color, (x, y, width, width))
 
-    sides = list(Direction)
-    for direction in cell.get_neighbors().keys():
-        if direction in sides:
-            sides.remove(direction)
-
-    for direction in sides:
-        wx1: int = x
-        wx2: int = x
-        wy1: int = y
-        wy2: int = y
-        if direction == Direction.SOUTH:  # DOWN
-            wx2 += width - constants.WALL_WIDTH
-            wy1 += width - constants.WALL_WIDTH
-            wy2 += width - constants.WALL_WIDTH
-        if direction == Direction.NORTH:  # UP
-            wx2 += width
-        if direction == Direction.EAST:  # RIGHT
-            wx1 += width - constants.WALL_WIDTH
-            wx2 += width - constants.WALL_WIDTH
-            wy2 += width - constants.WALL_WIDTH
-        if direction == Direction.WEST:  # LEFT
-            wy2 += width
-        pygame.draw.line(pgs, constants.RED, (wx1, wy1), (wx2, wy2), constants.WALL_WIDTH)
-
     cell.is_updated = True
 
 
-def draw_player(player: LePlayer, image: pygame.Surface, pgs: pygame.Surface):
+def draw_player(player: Player, image: pygame.Surface, pgs: pygame.Surface):
+    center = player.center
+    circle = player.get_area()
+    topleft = (center.x - circle.radius, center.y - circle.radius)
+
+    # draw player circle
+    pygame.draw.circle(surface=pgs,
+                       color=constants.PLAYER_CIRCLE_COLOR,
+                       width=constants.PLAYER_CIRCLE_WIDTH,
+                       radius=circle.radius,
+                       center=center.to_tuple())
+
     # Blit the player image
-    pgs.blit(image, player.pos.to_tuple())
+    pgs.blit(image, topleft)
 
     # Render the text. "True" means anti-aliased text.
-    # (The last parameter is color.)
     text = constants.PLAYER_NAME_FONT.render(player.name, True, constants.ORANGE)
 
     # Blit the text surface onto the pgs surface.
-    # We need to decide where to blit - Let's put it just below the player image.
-    text_pos = player.pos.x, player.pos.y + image.get_height()
+    text_pos = topleft[0], topleft[1] + image.get_height()
     pgs.blit(text, text_pos)
 
 
@@ -59,7 +44,11 @@ def draw_grid(grid_surface: pygame.Surface, color: tuple[int, int, int]):
 
 
 def draw_wall(wall_surface: pygame.Surface, wall: Wall):
-    if wall.requires_update:
-        wall_surface.fill(wall.color, wall.area)
-        wall.requires_update = False
+    if wall.is_updated:
+        return
+
+    wall_surface.fill(wall.color, wall.area)
+    wall.requires_update = False
+
+    wall.is_updated = True
 

@@ -1,6 +1,6 @@
 import pygame
 from typing import Optional
-from game_logic import GameState, Maze, CoordPair, LePlayer, LeMinotaur, PlayerState
+from game_logic import GameState, Maze, CoordPair, Player, Minotaur, PlayerState
 from graphics import Renderer
 from common import constants, helper
 from .ui import Ui
@@ -12,7 +12,7 @@ class SinglePlayerUi(Ui):
         maze = Maze(constants.ROWS, constants.WIDTH)
         maze.generate_labyrinth()
         self.gs = GameState(maze)
-        self._player: LePlayer = None
+        self._player: Player = None
 
         self.init_sp_players()
         self._renderer: Optional[Renderer] = None
@@ -21,13 +21,13 @@ class SinglePlayerUi(Ui):
         maze = self.gs.maze
         center = (constants.ROWS // 2 + 0.5) * maze.cell_width
         player_start = CoordPair(center, center)
-        self._player = LePlayer(player_start, (maze.cell_width / 2, maze.cell_width / 2), 'Mighty Mouse')
+        self._player = Player(player_start, maze.cell_width/4, 'Mighty Mouse')
 
-        mino_start = maze.get_random_edge_cell().get_pos()
+        mino_start = maze.get_random_edge_cell().get_center()
         mino_name = 'Billy'
-        minotaur = LeMinotaur(pos=mino_start,
-                              size=(maze.cell_width, maze.cell_width),
-                              name=mino_name)
+        minotaur = Minotaur(pos=mino_start,
+                            radius=maze.cell_width / 2,
+                            name=mino_name)
 
         # minotaur should be added first
         self.gs.add_player(minotaur)

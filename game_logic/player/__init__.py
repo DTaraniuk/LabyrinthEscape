@@ -1,2 +1,2 @@
-from .le_minotaur import LeMinotaur
-from .le_player import LePlayer, PlayerState
+from .minotaur import Minotaur
+from .player import Player, PlayerState
