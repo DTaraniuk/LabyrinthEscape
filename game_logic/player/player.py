@@ -2,7 +2,7 @@ from common.constants import *
 from game_logic.coordpair import CoordPair
 from enum import Enum
 from game_logic.player.modifier.le_modifier import Modifier, ModifierType
-from game_logic.player.modifier.le_mino_acceleration_modifier import MinoAccelerationModifier
+from game_logic.player.modifier.mino_acceleration_modifier import MinoAccelerationModifier
 from typing import Union, Iterable
 from game_logic.circle import Circle
 from game_logic.material_object import IMaterialObject
@@ -29,7 +29,7 @@ class Player(IMaterialObject):
         self.area = Circle(x, y, radius)
         self.speed = PLAYER_SPEED
         self.state: PlayerState = PlayerState.ALIVE
-        self.move_direction: CoordPair = CoordPair()
+        self._move_direction: CoordPair = CoordPair()
         self._modifiers: dict[ModifierType, list[Modifier]] = {
             ModifierType.Speed: [],
         }
@@ -48,6 +48,14 @@ class Player(IMaterialObject):
     def center(self, value: Union[CoordPair, tuple[float, float]]):
         self.area.center.x, self.area.center.y = value
 
+    @property
+    def move_direction(self):
+        return self._move_direction
+
+    @move_direction.setter
+    def move_direction(self, value: CoordPair):
+        self._move_direction = value.normalize()
+
     def get_image_name(self):
         return self.images[self.state]
 
@@ -58,15 +66,16 @@ class Player(IMaterialObject):
         vec = CoordPair(0, 0)
         for speed_mod in speed_mods:
             if isinstance(speed_mod, MinoAccelerationModifier) and speed_mod.is_active:
-                vec += speed_mod.move_dir * speed_mod.increase
+                vec += speed_mod.move_dir * self.speed*speed_mod.mult
 
         vec += CoordPair(dx * speed * ticks, dy * speed * ticks)
         return vec
 
-    def move(self, vector: CoordPair = None, ticks: int = None):
+    def move(self, vector: CoordPair = None, ticks: int = None) -> CoordPair:
         if not vector:
             vector = self.get_move_vector(ticks)
         self.area.center += vector
+        return vector
 
     # return: if the collision happened; adjusts position to avoid it
     def collide(self, other: IMaterialObject) -> bool:

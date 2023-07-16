@@ -44,7 +44,7 @@ class GameState:
             if isinstance(player, Minotaur):
                 self.minotaur = player
             else:
-                mino = Minotaur(player.pos, player.radius, constants.MINOTAUR_IMG)
+                mino = Minotaur(player.center, player.get_area().radius, constants.MINOTAUR_IMG)
                 self.minotaur = mino
         self.players[player.name] = player
         self._all_player_mem[player.name] = deque()
@@ -132,11 +132,13 @@ class GameState:
         for cell in curr_cell_with_neighbors:
             close_objects.extend(cell.get_walls().values())
 
-        for player in self.players.values():
-            player_center = player.center
-            if any(pygame.Rect(c.get_x(), c.get_y(), c.width, c.width).collidepoint(player_center.x, player_center.y)
+        for other_player in self.players.values():
+            if other_player.name == player.name:
+                continue
+            center = other_player.center
+            if any(pygame.Rect(c.get_x(), c.get_y(), c.width, c.width).collidepoint(center.x, center.y)
                    for c in curr_cell_with_neighbors):
-                close_objects.append(player)
+                close_objects.append(other_player)
 
         player.move(ticks=ticks)
 

@@ -31,7 +31,4 @@ def get_direction(coord_pair: CoordPair) -> Optional[Direction]:
 
 
 def get_move_direction(p1: CoordPair, p2: CoordPair) -> CoordPair:
-    diff = p2 - p1
-    x = diff.x/abs(diff.x) if abs(diff.x) > EPS else 0
-    y = diff.y/abs(diff.y) if abs(diff.y) > EPS else 0
     return CoordPair(x, y)
